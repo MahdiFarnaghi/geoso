@@ -1,4 +1,4 @@
-from .postgres import PostgresHandler_Tweets, PostgresHandler_EventDetection
+from .postgres import PostgresHandler_Tweets
 from .utils import Folders
 import tweepy
 from tweepy import OAuthHandler
