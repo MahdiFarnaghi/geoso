@@ -43,7 +43,7 @@ class PostgresHandler:
                             'host': DB_HOSTNAME,
                             'port': DB_PORT,
                             'database': DB_DATABASE}
-        self.db_schema = DB_SCHEMA if DB_SCHEMA != '' else 'public'
+        self.db_schema = DB_SCHEMA if DB_SCHEMA != '' and DB_SCHEMA is not None else 'public'
         self.db_url = URL(**self.postgres_db)
         self.db_version = None
         self.engine = None
@@ -81,6 +81,7 @@ class PostgresHandler:
                                Column('key', String, primary_key=True),
                                Column('value', String),
                                )
+        property_table.schema = self.db_schema
 
         meta.create_all()
         property_table_sql_insert_version_1 = f"INSERT INTO db_properties (key, value) " \
@@ -105,12 +106,14 @@ class PostgresHandler:
                            Column('geo_enabled', Boolean),
                            Column('lang', String(5)),
                            )
+        user_table.schema = self.db_schema
 
         hashtag_table = Table(f'hashtag', meta,
                               Column('id', Integer, primary_key=True,
                                      autoincrement=True),
                               Column('value', String(100), unique=True),
                               )
+        hashtag_table.schema = self.db_schema
 
         tweet_table = Table(f'tweet', meta,
                             Column('id', BigInteger, primary_key=True),
@@ -149,6 +152,8 @@ class PostgresHandler:
                             Column('hashtags_', String(300)),
                             Column('tweet_json', sqlalchemy.JSON),
                             )
+        tweet_table.schema = self.db_schema
+
 
         hashtag_tweet_table = Table(f'tweet_hashtag', meta,
                                     Column('tweet_id', BigInteger, ForeignKey(
@@ -156,6 +161,8 @@ class PostgresHandler:
                                     Column('hashtag_id', Integer, ForeignKey(
                                         'hashtag.id'), primary_key=True),
                                     )
+        hashtag_tweet_table.schema = self.db_schema
+        
         meta.create_all()
         property_table_sql_insert_version_2 = f"UPDATE db_properties " \
                                               "SET value = '{}' " \
@@ -177,10 +184,13 @@ class PostgresHandler:
                                          autoload_with=self.engine)
 
     def db_exists(self):
-        res = self.engine.execute(
-            f"select exists(SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('{self.db_url.database}'));")
-        for row in res:
-            return row[0]
+        try:
+            return sqlalchemy_utils.database_exists(self.db_url)
+        except:
+            res = self.engine.execute(
+                f"select exists(SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('{self.db_url.database}'));")
+            for row in res:
+                return row[0]
 
     def db_schema_exists(self):
         res = self.engine.execute(
@@ -200,18 +210,16 @@ class PostgresHandler:
                 engine.execute("CREATE DATABASE {};".format(
                     self.db_url.database))
 
-                self.engine.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
-                self.engine.execute("CREATE EXTENSION IF NOT EXISTS postgis_topology;")
-            
-            if not self.db_schema_exists():
-                self.engine.execute(f"CREATE SCHEMA IF NOT EXISTS {self.db_schema};")
-
-                self.engine.execute("CREATE EXTENSION IF NOT EXISTS postgis;")
-                self.engine.execute("CREATE EXTENSION IF NOT EXISTS postgis_topology;")
-
             if self.db_schema != 'public':
                 self.engine.execute(
+                    f"CREATE SCHEMA IF NOT EXISTS {self.db_schema};")
+                self.engine.execute(
                     f"SET search_path TO {self.db_schema}, public;")
+
+            # Postgis extension needs to be installed in public 
+            self.engine.execute(f"CREATE EXTENSION IF NOT EXISTS postgis SCHEMA public;")
+            self.engine.execute(
+                f"CREATE EXTENSION IF NOT EXISTS postgis_topology;")
 
             db_version = self.get_db_version()
             if db_version is None:
