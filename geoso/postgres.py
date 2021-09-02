@@ -302,7 +302,7 @@ class PostgresHandler_Tweets(PostgresHandler):
             return None
 
     def bulk_insert_geotagged_tweets(self, tweets: list, country_code: str = '', bbox_w=0, bbox_e=0, bbox_n=0,
-                                     bbox_s=0, tag='', force_insert=False):
+                                     bbox_s=0, tag='', force_insert=False, clean_text=False):
         self.check_db()
         lst_users = []
         lst_tweets = []
@@ -338,8 +338,12 @@ class PostgresHandler_Tweets(PostgresHandler):
             lang_supported = False
             num_of_words = 0
             if TextCleaner.is_lang_supported(tweet_json['lang']):
-                cleaned_text, num_of_words, lang_full_name = TextCleaner.clean_text(tweet_json['text'],
-                                                                                    tweet_json['lang'])
+                if clean_text:
+                    cleaned_text, num_of_words, lang_full_name = TextCleaner.clean_text(tweet_json['text'],
+                                                                                        tweet_json['lang'])
+                else:
+                    cleaned_text = ''
+                    num_of_words = len(str(tweet_json['text']).split())
                 lang_supported = True
             else:
                 cleaned_text = ''

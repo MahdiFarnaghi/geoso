@@ -29,6 +29,7 @@ class TweetReaderWriter:
                                  bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
                                  tag='',
                                  numb_of_tweets_per_hour_allowed_for_user=.5,
+                                 clean_text=False,
                                  db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
 
         if not os.path.exists(folder_path):
@@ -46,7 +47,8 @@ class TweetReaderWriter:
                                                                                   force_insert,
                                                                                   bbox_w, bbox_e, bbox_n, bbox_s,
                                                                                   tag,
-                                                                                  numb_of_tweets_per_hour_allowed_for_user)
+                                                                                  numb_of_tweets_per_hour_allowed_for_user,
+                                                                                  clean_text)
 
         return number_of_tweets_inserted
 
@@ -57,6 +59,7 @@ class TweetReaderWriter:
                                bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
                                tag='',
                                numb_of_tweets_per_hour_allowed_for_user=.5,
+                               clean_text=False,
                                db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
 
         print(
@@ -76,19 +79,19 @@ class TweetReaderWriter:
             with gzip.open(file_path) as f:
                 with tqdm(total=num_lines, desc="File \t{}".format(os.path.basename(file_path)), position=0, leave=True) as pbar:
                     number_of_tweets_inserted = TweetReaderWriter._jsonl_file_to_postgres(
-                        f, file_path, tag, num_lines, force_insert, pbar, TweetReaderWriter.postgres)
+                        f, file_path, tag, num_lines, force_insert, clean_text, pbar, TweetReaderWriter.postgres)
         else:
             num_lines = sum(1 for line in open(
                 file_path) if (line.strip()) != "")
             with open(file_path, 'r', encoding='utf-8') as f:
                 with tqdm(total=num_lines, position=0, leave=True) as pbar:
                     number_of_tweets_inserted = TweetReaderWriter._jsonl_file_to_postgres(
-                        f, file_path, tag, num_lines, force_insert, pbar, TweetReaderWriter.postgres)
+                        f, file_path, tag, num_lines, force_insert, clean_text, pbar, TweetReaderWriter.postgres)
         print(f"\t{number_of_tweets_inserted} tweets imported.")
         return number_of_tweets_inserted
 
     @staticmethod
-    def _jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, pbar, postgres):
+    def _jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, clean_text, pbar, postgres):
 
         chunks = 100
         number_of_tweets_inserted = 0
@@ -108,7 +111,7 @@ class TweetReaderWriter:
             if len(tweet_lines_to_insert) > 0 and (len(tweet_lines_to_insert) % chunks == 0 or ln == num_lines):
                 num = 0
                 with suppress_stdout():
-                    num = postgres.bulk_insert_geotagged_tweets(tweet_lines_to_insert, force_insert=force_insert,
+                    num = postgres.bulk_insert_geotagged_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
                                                                 tag=tag)
                 number_of_tweets_inserted += num
                 pbar.update(len(tweet_lines_to_insert))
