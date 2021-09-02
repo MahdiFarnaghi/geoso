@@ -67,7 +67,7 @@ class PostgresHandler:
 
     def get_db_version(self):
         try:
-            check_version_sql = f"SELECT value FROM db_properties WHERE key='version';"
+            check_version_sql = f"SELECT value FROM {self.db_schema}.db_properties WHERE key='version';"
             res = self.engine.execute(check_version_sql)
             for r in res:
                 return int(r[0])
@@ -84,7 +84,7 @@ class PostgresHandler:
         property_table.schema = self.db_schema
 
         meta.create_all()
-        property_table_sql_insert_version_1 = f"INSERT INTO db_properties (key, value) " \
+        property_table_sql_insert_version_1 = f"INSERT INTO {self.db_schema}.db_properties (key, value) " \
                                               "VALUES ('version', '{}');".format(
                                                   "1")
         self.engine.execute(property_table_sql_insert_version_1)
@@ -154,7 +154,6 @@ class PostgresHandler:
                             )
         tweet_table.schema = self.db_schema
 
-
         hashtag_tweet_table = Table(f'tweet_hashtag', meta,
                                     Column('tweet_id', BigInteger, ForeignKey(
                                         'tweet.id'), primary_key=True),
@@ -162,18 +161,16 @@ class PostgresHandler:
                                         'hashtag.id'), primary_key=True),
                                     )
         hashtag_tweet_table.schema = self.db_schema
-        
+
         meta.create_all()
-        property_table_sql_insert_version_2 = f"UPDATE db_properties " \
-                                              "SET value = '{}' " \
-                                              "WHERE key ='version'; ".format(
-                                                  "2")
+        property_table_sql_insert_version_2 = "UPDATE {}.db_properties SET value = '{}' WHERE key ='version'; ".format(self.db_schema,
+                                                                                                                       "2")
         self.engine.execute(property_table_sql_insert_version_2)
 
         pass
 
     def load_schema(self):
-        meta = MetaData(self.engine)
+        meta = MetaData(self.engine, schema=self.db_schema)
         self.table_tweet = Table(
             f'tweet', meta, autoload=True, autoload_with=self.engine)
         self.table_twitter_user = Table(f'twitter_user', meta, autoload=True,
@@ -216,8 +213,9 @@ class PostgresHandler:
                 self.engine.execute(
                     f"SET search_path TO {self.db_schema}, public;")
 
-            # Postgis extension needs to be installed in public 
-            self.engine.execute(f"CREATE EXTENSION IF NOT EXISTS postgis SCHEMA public;")
+            # Postgis extension needs to be installed in public
+            self.engine.execute(
+                f"CREATE EXTENSION IF NOT EXISTS postgis SCHEMA public;")
             self.engine.execute(
                 f"CREATE EXTENSION IF NOT EXISTS postgis_topology;")
 
@@ -246,9 +244,9 @@ class PostgresHandler_Tweets(PostgresHandler):
                          DB_USERNAME, DB_PASSWORD, DB_SCHEMA)
 
     def delete_old_tweets(self, num_days=90):
-        sql = F"DELETE FROM tweet_hashtag WHERE tweet_id in (SELECT id from tweet WHERE EXTRACT(DAY FROM NOW() - created_at) > {num_days});"
+        sql = F"DELETE FROM {self.db_schema}.tweet_hashtag WHERE tweet_id in (SELECT id from {self.db_schema}.tweet WHERE EXTRACT(DAY FROM NOW() - created_at) > {num_days});"
         self.engine.execute(sql)
-        sql = F"DELETE FROM tweet WHERE EXTRACT(DAY FROM NOW() - created_at) > {num_days};"
+        sql = F"DELETE FROM {self.db_schema}.tweet WHERE EXTRACT(DAY FROM NOW() - created_at) > {num_days};"
         self.engine.execute(sql)
         pass
 
@@ -361,9 +359,9 @@ class PostgresHandler_Tweets(PostgresHandler):
         if force_insert:
             if len(lst_tweet_ids) > 0:
                 self.engine.execute(
-                    "DELETE FROM tweet_hashtag WHERE tweet_hashtag.tweet_id in ({});".format(",".join(str(x) for x in lst_tweet_ids)))
+                    f"DELETE FROM {self.db_schema}.tweet_hashtag WHERE tweet_hashtag.tweet_id in ({','.join(str(x) for x in lst_tweet_ids)});")
                 self.engine.execute(
-                    "DELETE FROM tweet WHERE tweet.id in ({});".format(",".join(str(x) for x in lst_tweet_ids)))
+                    f"DELETE FROM {self.db_schema}.tweet WHERE tweet.id in ({','.join(str(x) for x in lst_tweet_ids)});")
         if len(lst_tweets) > 0:
             if len(lst_users) > 0:
                 self.engine.execute(pg_insert(self.table_twitter_user).on_conflict_do_nothing(index_elements=['id']),
@@ -375,10 +373,10 @@ class PostgresHandler_Tweets(PostgresHandler):
                 self.engine.execute(pg_insert(self.table_hashtag).on_conflict_do_nothing(index_elements=['value']),
                                     lst_hashtags)
             if len(lst_tweet_hashtags) > 0:
-                self.engine.execute("INSERT INTO tweet_hashtag(tweet_id, hashtag_id) "
+                self.engine.execute(f"INSERT INTO {self.db_schema}.tweet_hashtag(tweet_id, hashtag_id) "
                                     "VALUES("
                                     "   %(tweet_id)s, "
-                                    "   (SELECT hashtag.id FROM hashtag WHERE hashtag.value = %(value)s)"
+                                    f"   (SELECT hashtag.id FROM {self.db_schema}.hashtag WHERE hashtag.value = %(value)s)"
                                     ") ON CONFLICT (tweet_id, hashtag_id) DO NOTHING;",
                                     lst_tweet_hashtags)
         return len(lst_tweets)
@@ -438,7 +436,7 @@ class PostgresHandler_Tweets(PostgresHandler):
             if len(lst_tweet_ids) > 0:
                 with self.engine.begin():
                     self.engine.execute(
-                        "DELETE FROM tweet WHERE tweet.id in ({});".format(",".join(str(x) for x in lst_tweet_ids)))
+                        f"DELETE FROM {self.db_schema}.tweet WHERE tweet.id in ({','.join(str(x) for x in lst_tweet_ids)});")
 
         if len(lst_tweets) > 0:
             with self.engine.begin():
@@ -454,10 +452,10 @@ class PostgresHandler_Tweets(PostgresHandler):
                     self.engine.execute(pg_insert(self.table_hashtag).on_conflict_do_nothing(index_elements=['value']),
                                         lst_hashtags)
                 if len(lst_tweet_hashtags) > 0:
-                    self.engine.execute("INSERT INTO tweet_hashtag(tweet_id, hashtag_id) "
+                    self.engine.execute(f"INSERT INTO {self.db_schema}.tweet_hashtag(tweet_id, hashtag_id) "
                                         "VALUES("
                                         "   %(tweet_id)s, "
-                                        "   (SELECT hashtag.id FROM hashtag WHERE hashtag.value = %(value)s)"
+                                        f"   (SELECT hashtag.id FROM {self.db_schema}.hashtag WHERE hashtag.value = %(value)s)"
                                         ") ON CONFLICT (tweet_id, hashtag_id) DO NOTHING;",
                                         lst_tweet_hashtags)
         return len(lst_tweets)
@@ -674,297 +672,8 @@ class PostgresHandler_Tweets(PostgresHandler):
         return False
 
     def number_of_tweets(self):
-        return self.engine.execute('SELECT count(*) FROM tweet;').scalar()
+        return self.engine.execute('SELECT count(*) FROM {self.db_schema}.tweet;').scalar()
 
     def update_geom(self):
         updateQuery = "update public.tweet set geom4326=ST_SetSRID(ST_MakePoint(x, y), 4326);"
         self.engine.execute(updateQuery)
-
-
-class PostgresHandler_EventDetection(PostgresHandler):
-    def __init__(self, DB_HOSTNAME, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD,  DB_SCHEMA):
-        super().__init__(DB_HOSTNAME, DB_PORT, DB_DATABASE,
-                         DB_USERNAME, DB_PASSWORD,  DB_SCHEMA)
-        self.table_event_detection_task = None
-        self.table_cluster = None
-        self.table_cluster_points = None
-
-    # TODO: Modify this
-    def create_database_schema_version01(self):
-        meta = MetaData(self.engine)
-
-        task_id_seq = Sequence(
-            'event_detection_task_id_seq', metadata=meta)
-        event_detection_task_table = Table(f'event_detection_task', meta,
-                                           Column('task_id', BigInteger, task_id_seq,
-                                                  server_default=task_id_seq.next_value(),
-                                                  primary_key=True),
-                                           Column('task_name', String(
-                                               100), nullable=False, unique=True),
-                                           Column('desc', String(
-                                               500), nullable=True),
-                                           Column('min_x', Numeric,
-                                                  nullable=False),
-                                           Column('min_y', Numeric,
-                                                  nullable=False),
-                                           Column('max_x', Numeric,
-                                                  nullable=False),
-                                           Column('max_y', Numeric,
-                                                  nullable=False),
-                                           Column('look_back_hrs', Numeric,
-                                                  nullable=False),
-                                           Column('lang_code', String(
-                                               2), nullable=False),
-                                           Column('interval_min',
-                                                  Integer, nullable=False),
-                                           Column('active', Boolean,
-                                                  default=False),
-
-                                           )
-
-        meta.create_all()
-        property_table_sql_insert_version_1 = f"INSERT INTO db_properties (key, value) " \
-                                              "VALUES ('version', '{}');".format(
-                                                  "1")
-        self.engine.execute(property_table_sql_insert_version_1)
-        pass
-
-    def create_database_schema_version04(self):
-        ver = 4
-        meta = MetaData(self.engine)
-
-        cluster_id_seq = Sequence(
-            'cluster_id_seq', metadata=meta)
-        cluster_table = Table(f'cluster', meta,
-                              Column('id', BigInteger, cluster_id_seq,
-                                     server_default=cluster_id_seq.next_value(),
-                                     primary_key=True),
-                              Column('task_id', BigInteger, nullable=False),
-                              Column('task_name', String(100), nullable=False),
-                              Column('topic', String(2000), nullable=False),
-                              Column('topic_words', String(
-                                  500), nullable=False),
-                              Column('latitude_min', Numeric),
-                              Column('latitude_max', Numeric),
-                              Column('longitude_min', Numeric),
-                              Column('longitude_max', Numeric),
-                              Column('date_time_min', DateTime),
-                              Column('date_time_max', DateTime),
-
-                              )
-
-        cluster_point_id_seq = Sequence(
-            'cluster_point_id_seq', metadata=meta)
-        cluster_point = Table(f'cluster_point', meta,
-                              Column('id', BigInteger, cluster_id_seq,
-                                     server_default=cluster_point_id_seq.next_value(),
-                                     primary_key=True),
-                              Column('cluster_id', BigInteger, ForeignKey(
-                                  'cluster.id'), nullable=False),
-                              Column('longitude', Numeric, nullable=False),
-                              Column('latitude', Numeric, nullable=False),
-                              Column('text', String(500), nullable=False),
-                              Column('date_time', DateTime, nullable=False),
-                              Column('user_id', BigInteger, nullable=False),
-                              Column('tweet_id', BigInteger, nullable=False),
-
-                              )
-
-        meta.create_all()
-        property_table_sql_insert_version_2 = f"UPDATE db_properties " \
-                                              "SET value = '{}' " \
-                                              "WHERE key ='version'; ".format(
-                                                  str(ver))
-        self.engine.execute(property_table_sql_insert_version_2)
-        pass
-
-    def get_tasks(self, active=True) -> dict:
-        tasks = []
-        self.check_db()
-        result = self.engine.execute(self.table_event_detection_task.select())
-        for row in result:
-            if row['active'] == active:
-                tasks.append(
-                    {
-                        'task_id': row['task_id'],
-                        'task_name': row['task_name'],
-                        'desc': row['desc'],
-                        'min_x': row['min_x'],
-                        'min_y': row['min_y'],
-                        'max_x': row['max_x'],
-                        'max_y': row['max_y'],
-                        'look_back_hrs': row['look_back_hrs'],
-                        'lang_code': row['lang_code'],
-                        'interval_min': row['interval_min']}
-                )
-        return tasks
-
-    def load_schema(self):
-        meta = MetaData(self.engine)
-        self.table_event_detection_task = Table(f'event_detection_task', meta, autoload=True,
-                                                autoload_with=self.engine)
-
-        self.table_cluster = Table(f'cluster', meta, autoload=True,
-                                   autoload_with=self.engine)
-
-        self.table_cluster_point = Table(f'cluster_point', meta, autoload=True,
-                                         autoload_with=self.engine)
-
-    def get_tasks_bbox(self):
-        get_task_cql = "SELECT min(min_x) as min_x, min(min_y) as min_y, max(max_x) as max_x, max(max_y) as max_y from event_detection_task;"
-        res = self.engine.execute(get_task_cql)
-        for row in res:
-            return row['min_x'], row['min_y'], row['max_x'], row['max_y']
-        return None, None, None, None, None
-
-    def get_tasks_languages(self):
-        get_task_cql = "SELECT distinct(lang_code) from event_detection_task;"
-        res = self.engine.execute(get_task_cql)
-        languages = []
-        for row in res:
-            languages.append(str(row['lang_code']))
-        return languages
-
-    def delete_event_detection_tasks(self):
-        self.check_db()
-        self.engine.execute(self.table_event_detection_task.delete())
-
-    def delete_event_detection_task(self, task_name):
-        self.check_db()
-        self.engine.execute(self.table_event_detection_task.delete().where(
-            self.table_event_detection_task.c.task_name == task_name))
-
-    def get_clusters(self, latitude_min, latitude_max, longitude_min, longitude_max, date_time_min, date_time_max):
-        get_clusters_sql = f"""SELECT * FROM cluster WHERE 
-            ST_Intersects(
-            ST_MakeEnvelope({longitude_min}, {longitude_max}, {latitude_min}, {latitude_max})
-            ,
-            ST_MakeEnvelope(longitude_min, longitude_max, latitude_min, latitude_max)
-            )
-            AND 
-            ('{date_time_min}' BETWEEN date_time_min AND date_time_max);"""
-
-        get_clusters_sql = get_clusters_sql.replace('\n', ' ')
-
-        res = self.engine.execute(get_clusters_sql)
-
-        clusters = []
-        for row in res:
-            clusters.append(
-                {
-                    'id': row['id'],
-                    'task_id': row['task_id'],
-                    'task_name': row['task_name'],
-                    'topic': row['topic'],
-                    'topic_words': row['topic_words'],
-                    'latitude_min': row['latitude_min'],
-                    'latitude_max': row['latitude_max'],
-                    'longitude_min': row['longitude_min'],
-                    'longitude_max': row['longitude_max'],
-                    'date_time_min': row['date_time_min'],
-                    'date_time_max': row['date_time_max'],
-                }
-            )
-        return clusters
-
-    def get_cluster_points(self, cluster_id):
-
-        get_point_sql = f"""SELECT * FROM cluster_point WHERE 
-            cluster_id = {cluster_id};"""
-        res = self.engine.execute(get_point_sql)
-
-        cluster_points = []
-        for row in res:
-            cluster_points.append(
-                {
-                    'id': row['id'],
-                    'cluster_id': row['cluster_id'],
-                    'longitude': row['longitude'],
-                    'latitude': row['latitude'],
-                    'text': row['text'],
-                    'date_time': row['date_time'],
-                    'user_id': row['user_id'],
-                    'tweet_id': row['tweet_id'],
-                }
-            )
-        return cluster_points
-
-    def get_cluster_point_tweet_ids(self, cluster_id):
-        get_point_sql = f"""SELECT tweet_id FROM cluster_point WHERE 
-            cluster_id = {cluster_id};"""
-
-        res = self.engine.execute(get_point_sql)
-
-        cluster_point_ids = []
-
-        for row in res:
-            cluster_point_ids.append(row['tweet_id'])
-
-        return cluster_point_ids
-
-    def insert_event_detection_task(self, task_name, desc: str, min_x, min_y, max_x, max_y, look_back_hrs, lang_code, interval_min, active=True, force_insert=False) -> int:
-        self.check_db()
-
-        ins = pg_insert(self.table_event_detection_task).values(
-            task_name=task_name[0:100],
-            desc=desc[0: 500],
-            min_x=min_x,
-            min_y=min_y,
-            max_x=max_x,
-            max_y=max_y,
-            look_back_hrs=look_back_hrs,
-            lang_code=lang_code,
-            interval_min=interval_min,
-            active=active)
-        if force_insert:
-            ins = ins.on_conflict_do_update(
-                index_elements=['task_name'],
-                set_=dict(
-                    task_name=task_name[0:100],
-                    desc=desc[0: 500],
-                    min_x=min_x,
-                    min_y=min_y,
-                    max_x=max_x,
-                    max_y=max_y,
-                    look_back_hrs=look_back_hrs,
-                    lang_code=lang_code,
-                    interval_min=interval_min,
-                    active=active)
-            )
-        else:
-            ins = ins.on_conflict_do_nothing(
-                index_elements=['task_id'])
-            ins = ins.on_conflict_do_nothing(
-                index_elements=['task_name'])
-        res = self.engine.execute(ins)
-        return res.lastrowid
-
-    def insert_clusters(self, clusters: list):
-        for cluster in clusters:
-            if cluster['id'] is None:
-                clust = cluster.copy()
-                points = clust.pop('points')
-                clust.pop('id')
-                ins = pg_insert(self.table_cluster).on_conflict_do_nothing(
-                    index_elements=['id']).values(clust)
-                res = self.engine.execute(ins)
-                clust_id = res.inserted_primary_key[0]
-                if clust_id is not None:
-                    for i in range(len(points)):
-                        points[i]["cluster_id"] = clust_id
-                    ins_points = pg_insert(self.table_cluster_point).on_conflict_do_nothing(
-                        index_elements=['id']).values(points)
-                    self.engine.execute(ins_points)
-                else:
-                    raise Exception('cluster_id is None!')
-            else:
-                clust = cluster.copy()
-                points = clust.pop('points')
-                ins = pg_insert(self.table_cluster).values(clust)
-                ins = ins.on_conflict_do_update(index_elements=['id'],
-                                                set_=clust).values(clust)  # Maybe I should pop the id before
-                self.engine.execute(ins)
-                ins_points = pg_insert(self.table_cluster_point).on_conflict_do_nothing(
-                    index_elements=['id']).values(points)
-                self.engine.execute(ins_points)
-        pass
