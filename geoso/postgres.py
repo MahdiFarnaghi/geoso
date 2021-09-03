@@ -95,8 +95,8 @@ class PostgresHandler:
 
         user_table = Table(f'twitter_user', meta,
                            Column('id', BigInteger, primary_key=True),
-                           Column('name', String(50)),
-                           Column('screen_name', String(50)),
+                           Column('name', String(100)),
+                           Column('screen_name', String(100)),
                            Column('location', String(300)),
                            Column('followers_count', Integer),
                            Column('friends_count', Integer),
@@ -124,8 +124,8 @@ class PostgresHandler:
                             Column('lang', String(5)),
                             Column('user_id', BigInteger,
                                    ForeignKey('twitter_user.id')),
-                            Column('user_screen_name', String(50)),
-                            Column('country', String(50), nullable=True),
+                            Column('user_screen_name', String(100)),
+                            Column('country', String(100), nullable=True),
                             Column('country_code', String(5), nullable=True),
                             Column('x', Numeric, nullable=True),
                             Column('y', Numeric, nullable=True),
@@ -138,7 +138,7 @@ class PostgresHandler:
                             Column('in_reply_to_user_id',
                                    BigInteger, nullable=True),
                             Column('in_reply_to_screen_name',
-                                   String(50), nullable=True),
+                                   String(100), nullable=True),
                             Column('quoted_status_id',
                                    BigInteger, nullable=True),
                             Column('is_quote_status', Boolean, nullable=True),
@@ -468,7 +468,7 @@ class PostgresHandler_Tweets(PostgresHandler):
             "id": tweet_json['user']['id'],
             "name": tweet_json['user']['name'],
             "screen_name": tweet_json['user']['screen_name'],
-            "location": str(tweet_json['user']['location'])[0:299],
+            "location": str(tweet_json['user']['location'])[0:300],
             "followers_count": tweet_json['user']['followers_count'],
             "friends_count": tweet_json['user']['friends_count'],
             "listed_count": tweet_json['user']['listed_count'],
@@ -497,7 +497,7 @@ class PostgresHandler_Tweets(PostgresHandler):
             "retweet_count": self.value_or_none(tweet_json, 'retweet_count'),
             "favorited": self.value_or_none(tweet_json, 'favorited'),
             "retweeted": self.value_or_none(tweet_json, 'retweeted'),
-            "country": tweet_json['place']['country'] if tweet_json['place'] is not None and
+            "country": tweet_json['place']['country'][0:100] if tweet_json['place'] is not None and
             tweet_json['place'][
                 'country'] is not None else '',
             "country_code": tweet_json['place']['country_code'] if tweet_json['place'] is not None and
@@ -560,8 +560,8 @@ class PostgresHandler_Tweets(PostgresHandler):
             ins_user = pg_insert(self.table_twitter_user).values(
                 id=tweet_json['user']['id'],
                 name=tweet_json['user']['name'],
-                screen_name=tweet_json['user']['screen_name'],
-                location=str(tweet_json['user']['location'])[0:299],
+                screen_name=tweet_json['user']['screen_name'][0:100],
+                location=str(tweet_json['user']['location'])[0:300],
                 followers_count=tweet_json['user']['followers_count'],
                 friends_count=tweet_json['user']['friends_count'],
                 listed_count=tweet_json['user']['listed_count'],
@@ -582,10 +582,10 @@ class PostgresHandler_Tweets(PostgresHandler):
                 created_at=tweet_json['created_at'],
                 lang=tweet_json['lang'],
                 user_id=tweet_json['user']['id'],
-                user_screen_name=tweet_json['user']['screen_name'],
+                user_screen_name=tweet_json['user']['screen_name'][0:100],
                 in_reply_to_status_id=tweet_json['in_reply_to_status_id'],
                 in_reply_to_user_id=tweet_json['in_reply_to_user_id'],
-                in_reply_to_screen_name=tweet_json['in_reply_to_screen_name'],
+                in_reply_to_screen_name=tweet_json['in_reply_to_screen_name'][0:100],
                 # quoted_status_id=tweet_json['quoted_status_id'],
                 is_quote_status=tweet_json['is_quote_status'],
                 quote_count=self.value_or_none(tweet_json, 'quote_count'),
@@ -593,7 +593,7 @@ class PostgresHandler_Tweets(PostgresHandler):
                 retweet_count=self.value_or_none(tweet_json, 'retweet_count'),
                 favorited=self.value_or_none(tweet_json, 'favorited'),
                 retweeted=self.value_or_none(tweet_json, 'retweeted'),
-                country=tweet_json['place']['country'] if tweet_json['place'] is not None and tweet_json['place'][
+                country=tweet_json['place']['country'][0:100] if tweet_json['place'] is not None and tweet_json['place'][
                     'country'] is not None else '',
                 country_code=tweet_json['place']['country_code'] if tweet_json['place'] is not None and
                 tweet_json['place'][
@@ -617,11 +617,11 @@ class PostgresHandler_Tweets(PostgresHandler):
                         lang=tweet_json['lang'],
                         tweet_json=str(tweet_json),
                         user_id=tweet_json['user']['id'],
-                        user_screen_name=tweet_json['user']['screen_name'],
+                        user_screen_name=tweet_json['user']['screen_name'][0:100],
                         text=tweet_json['text'],
                         in_reply_to_status_id=tweet_json['in_reply_to_status_id'],
                         in_reply_to_user_id=tweet_json['in_reply_to_user_id'],
-                        in_reply_to_screen_name=tweet_json['in_reply_to_screen_name'],
+                        in_reply_to_screen_name=tweet_json['in_reply_to_screen_name'][0:100],
                         # quoted_status_id=tweet_json['quoted_status_id'],
                         is_quote_status=tweet_json['is_quote_status'],
                         quote_count=self.value_or_none(
@@ -630,7 +630,7 @@ class PostgresHandler_Tweets(PostgresHandler):
                         retweet_count=tweet_json['retweet_count'],
                         favorited=tweet_json['favorited'],
                         retweeted=tweet_json['retweeted'],
-                        country=tweet_json['place']['country'] if tweet_json['place'] is not None and
+                        country=tweet_json['place']['country'][0:100] if tweet_json['place'] is not None and
                         tweet_json['place'][
                             'country'] is not None else '',
                         country_code=tweet_json['place']['country_code'] if tweet_json['place'] is not None and
