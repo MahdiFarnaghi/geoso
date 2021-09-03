@@ -95,16 +95,16 @@ class PostgresHandler:
 
         user_table = Table(f'twitter_user', meta,
                            Column('id', BigInteger, primary_key=True),
-                           Column('name', String(100)),
-                           Column('screen_name', String(100)),
-                           Column('location', String(1000)),
+                           Column('name', String(100), nullable=True),
+                           Column('screen_name', String(100), nullable=True),
+                           Column('location', String(1000), nullable=True),
                            Column('followers_count', Integer),
                            Column('friends_count', Integer),
                            Column('listed_count', Integer),
                            Column('favourites_count', Integer),
                            Column('statuses_count', Integer),
                            Column('geo_enabled', Boolean),
-                           Column('lang', String(5)),
+                           Column('lang', String(5), nullable=True),
                            )
         user_table.schema = self.db_schema
 
@@ -149,7 +149,7 @@ class PostgresHandler:
                             Column('retweeted', Boolean, nullable=True),
                             Column('Tag', String(100), nullable=True),
                             Column('lang_supported', Boolean, nullable=True),
-                            Column('hashtags_', String(1000)),
+                            Column('hashtags_', String(1000), nullable=True),
                             Column('tweet_json', sqlalchemy.JSON),
                             )
         tweet_table.schema = self.db_schema
