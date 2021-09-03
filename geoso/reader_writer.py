@@ -1,4 +1,5 @@
 from abc import abstractclassmethod, abstractmethod
+from build.lib.geoso.utils import Folders
 import os
 from datetime import datetime
 
@@ -15,6 +16,7 @@ import abc
 import gzip
 import pathlib
 import json
+import shutil
 
 
 class TweetReaderWriter:
@@ -22,18 +24,25 @@ class TweetReaderWriter:
     postgres = None
 
     @abc.abstractmethod
-    def jsonl_folder_to_postgres(folder_path: str,
-                                 start_date: datetime = None,
-                                 end_date: datetime = None,
-                                 force_insert=True,
-                                 bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
-                                 tag='',
-                                 numb_of_tweets_per_hour_allowed_for_user=.5,
-                                 clean_text=False,
-                                 db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
+    def import_from_jsonl_folder_to_postgres(folder_path: str,
+                                             move_imported_to_folder=False,
+                                             continue_on_error=True,
+                                             start_date: datetime = None,
+                                             end_date: datetime = None,
+                                             force_insert=True,
+                                             bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
+                                             tag='',
+                                             numb_of_tweets_per_hour_allowed_for_user=.5,
+                                             clean_text=False,
+                                             db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
 
         if not os.path.exists(folder_path):
             raise ValueError(f"The folder ({folder_path}) does not exist!")
+
+        imported_folder_path = None
+        if move_imported_to_folder:
+            imported_folder_path = os.path.join(folder_path, 'imported')
+            Folders.make_dir_with_check(imported_folder_path)
 
         TweetReaderWriter.check_postgres(
             db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
@@ -43,24 +52,30 @@ class TweetReaderWriter:
         pathlist = Path(folder_path).glob('**/*.json*')
         for path in pathlist:
             path_in_str = str(path)
-            number_of_tweets_inserted += TweetReaderWriter.jsonl_file_to_postgres(path_in_str, start_date, end_date,
-                                                                                  force_insert,
-                                                                                  bbox_w, bbox_e, bbox_n, bbox_s,
-                                                                                  tag,
-                                                                                  numb_of_tweets_per_hour_allowed_for_user,
-                                                                                  clean_text)
+            number_of_tweets_inserted += TweetReaderWriter.import_from_jsonl_file_to_postgres(path_in_str,
+                                                                                              continue_on_error,
+                                                                                              start_date, end_date,
+                                                                                              force_insert,
+                                                                                              bbox_w, bbox_e, bbox_n, bbox_s,
+                                                                                              tag,
+                                                                                              numb_of_tweets_per_hour_allowed_for_user,
+                                                                                              clean_text)
+            if move_imported_to_folder:
+                shutil.move(path_in_str, os.path.join(
+                    imported_folder_path, path.name))
 
         return number_of_tweets_inserted
 
     @abc.abstractmethod
-    def jsonl_file_to_postgres(file_path: str,
-                               start_date: datetime = None, end_date: datetime = None,
-                               force_insert=True,
-                               bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
-                               tag='',
-                               numb_of_tweets_per_hour_allowed_for_user=.5,
-                               clean_text=False,
-                               db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
+    def import_from_jsonl_file_to_postgres(file_path: str,
+                                           continue_on_error=True,
+                                           start_date: datetime = None, end_date: datetime = None,
+                                           force_insert=True,
+                                           bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
+                                           tag='',
+                                           numb_of_tweets_per_hour_allowed_for_user=.5,
+                                           clean_text=False,
+                                           db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
 
         print(
             f"Import tweets from {os.path.basename(file_path)} to the postgres data.")
@@ -86,12 +101,13 @@ class TweetReaderWriter:
             with open(file_path, 'r', encoding='utf-8') as f:
                 with tqdm(total=num_lines, position=0, leave=True) as pbar:
                     number_of_tweets_inserted = TweetReaderWriter._jsonl_file_to_postgres(
-                        f, file_path, tag, num_lines, force_insert, clean_text, pbar, TweetReaderWriter.postgres)
+                        f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error, pbar, TweetReaderWriter.postgres)
         print(f"\t{number_of_tweets_inserted} tweets imported.")
         return number_of_tweets_inserted
 
     @staticmethod
-    def _jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, clean_text, pbar, postgres):
+    def _jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error,
+                                pbar, postgres):
 
         chunks = 100
         number_of_tweets_inserted = 0
@@ -105,14 +121,24 @@ class TweetReaderWriter:
                     tweet_lines_to_insert.append(line.strip())
                     ln += 1
                 except:
-                    raise Exception(
-                        'Error in parsing file {}'.format(file_path))
+                    if continue_on_error:
+                        print(F'Error in parsing file {file_path}')
+                    else:
+                        raise Exception(
+                            'Error in parsing file {}'.format(file_path))
 
             if len(tweet_lines_to_insert) > 0 and (len(tweet_lines_to_insert) % chunks == 0 or ln == num_lines):
                 num = 0
                 with suppress_stdout():
-                    num = postgres.bulk_insert_geotagged_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
+                    try:
+                      num = postgres.bulk_insert_geotagged_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
                                                                 tag=tag)
+                    except:
+                        if continue_on_error:
+                            print('Error in inserting tweets')
+                        else:
+                            raise Exception('Error in inserting tweets')                      
+                    
                 number_of_tweets_inserted += num
                 pbar.update(len(tweet_lines_to_insert))
                 tweet_lines_to_insert.clear()

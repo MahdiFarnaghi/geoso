@@ -47,8 +47,9 @@ class Test_TweetReaderWriter(unittest.TestCase):
 
     def test_jsonl_folder_to_postgres(self):
         
-        num_inserted = TweetReaderWriter.jsonl_folder_to_postgres(
+        num_inserted = TweetReaderWriter.import_from_jsonl_folder_to_postgres(
             test_data_jsonl_folder_path,
+            continue_on_error=True,
             db_database=self.DB_DATABASE,
             db_hostname=self.DB_HOSTNAME,
             db_password=self.DB_PASSWORD,

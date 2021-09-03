@@ -475,7 +475,7 @@ class PostgresHandler_Tweets(PostgresHandler):
             "favourites_count": tweet_json['user']['favourites_count'],
             "statuses_count": tweet_json['user']['statuses_count'],
             "geo_enabled": tweet_json['user']['geo_enabled'],
-            "lang": tweet_json['user']['lang']})
+            "lang": tweet_json['user']['lang'] if tweet_json['user']['lang'] is not None else ''})
         lst_tweets.append({
             "tag": tag,
             "tweet_json": str(tweet_json),
