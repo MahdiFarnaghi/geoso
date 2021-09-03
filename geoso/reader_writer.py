@@ -1,5 +1,4 @@
 from abc import abstractclassmethod, abstractmethod
-from build.lib.geoso.utils import Folders
 import os
 from datetime import datetime
 
@@ -10,7 +9,7 @@ from email.utils import mktime_tz, parsedate_tz
 from datetime import datetime
 import pytz
 
-from .utils import suppress_stdout
+from .utils import suppress_stdout, Folders
 from .postgres import PostgresHandler_Tweets
 import abc
 import gzip
