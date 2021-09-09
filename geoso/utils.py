@@ -27,9 +27,12 @@ class Folders:
         return Path(p)
 
     @staticmethod
-    def make_dir_with_check(folder_path: Path):
-        if not folder_path.exists():
-            os.makedirs(str(folder_path.absolute()))
+    def make_dir_with_check(folder_path: str):
+
+        _folder_path = Path(folder_path)
+
+        if not _folder_path.exists():
+            os.makedirs(str(_folder_path.absolute()))
 
     @staticmethod
     def make_parent_dir_with_check(file_path: Path):
