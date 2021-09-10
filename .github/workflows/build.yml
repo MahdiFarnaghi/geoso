@@ -48,7 +48,8 @@ jobs:
                   pip install --user --no-cache-dir Cython
                   pip install --user -r requirements.txt
                   pip install --user -r requirements_dev.txt
-            - name: PKG-TEST              
+            # OS other that Linux are excluded from running the tests. That's because docker containers are only supported on the Linux machine. Therefore other OSs won't be able to deploy the postgres service.
+            - name: PKG-TEST                          
               if: runner.os == 'Linux'
               run: 
                 python -m unittest discover tests/
