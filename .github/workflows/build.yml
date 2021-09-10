@@ -15,8 +15,8 @@ jobs:
             fail-fast: false
             matrix:
                 config:
-                    - { os: windows-latest, py: "3.7" }
-                    - { os: macOS-latest, py: "3.7" }
+                    # - { os: windows-latest, py: "3.7" }
+                    # - { os: macOS-latest, py: "3.7" }
                     - { os: ubuntu-latest, py: "3.6" }
                     - { os: ubuntu-latest, py: "3.7" }
                     - { os: ubuntu-latest, py: "3.8" }
@@ -37,6 +37,12 @@ jobs:
 
         env:
             SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+            TEST_DB_USER: postgres
+            TEST_DB_PASS: postgres
+            TEST_DB_HOSTNAME: localhost
+            TEST_DB_PORT: 5432
+            TEST_DB_DATABASE: geoso_test
+            TEST_DB_SCHEMA: geoso
         steps:
             - name: CHECKOUT CODE
               uses: actions/checkout@v2
@@ -51,13 +57,5 @@ jobs:
                   pip install --user -r requirements.txt
                   pip install --user -r requirements_dev.txt
             - name: PKG-TEST
-              env:
-                  TEST_DB_USER: postgres
-                  TEST_DB_PASS: postgres
-                  TEST_DB_HOSTNAME: localhost
-                  TEST_DB_PORT: 5432
-                  TEST_DB_DATABASE: geoso_test
-                  TEST_DB_SCHEMA: geoso
               run: |
-                  python -m unittest discover tests/
-              
+                  python -m unittest discover tests/                  
