@@ -28,14 +28,14 @@ class EnvVar:
         db_database = os.getenv('TEST_DB_DATABASE')
         db_schema = os.getenv('TEST_DB_SCHEMA')
 
-        # Default settings of the test database, which is also set for GitHub Postgres service in workflows/build.yml file
-        if db_hostname is None or db_port is None or db_user is None or db_pass is None or db_database is None:
-            db_hostname = 'localhost'
-            db_port = 5432
-            db_user = 'postgres'
-            db_pass = 'postgres'
-            db_database = 'geoso_test'
-            db_schema = 'test'
+        # # Default settings of the test database, which is also set for GitHub Postgres service in workflows/build.yml file
+        # if db_hostname is None or db_port is None or db_user is None or db_pass is None or db_database is None:
+        #     db_hostname = '127.0.0.1'
+        #     db_port = 5432
+        #     db_user = 'postgres'
+        #     db_pass = 'postgres'
+        #     db_database = 'geoso_test'
+        #     db_schema = 'test'
 
         return db_hostname, db_port, db_user, db_pass, db_database, db_schema
 

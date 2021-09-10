@@ -15,10 +15,10 @@ jobs:
             fail-fast: false
             matrix:
                 config:
-                    - { os: windows-latest, py: "3.7" }
-                    - { os: macOS-latest, py: "3.7" }
-                    - { os: ubuntu-latest, py: "3.6" }
-                    - { os: ubuntu-latest, py: "3.7" }
+                    # - { os: windows-latest, py: "3.7" }
+                    # - { os: macOS-latest, py: "3.7" }
+                    # - { os: ubuntu-latest, py: "3.6" }
+                    # - { os: ubuntu-latest, py: "3.7" }
                     - { os: ubuntu-latest, py: "3.8" }
         # Service containers to run with `container-job`
         services:
@@ -33,13 +33,16 @@ jobs:
                 ports:
                     - 5432:5432
                 # Set health checks to wait until postgres has started
-                options: >-
-                --health-cmd pg_isready
-                --health-interval 10s
-                --health-timeout 5s
-                --health-retries 5 
+                options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
         env:
             SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
+            TEST_DB_USER: postgres
+            TEST_DB_PASS: post123456
+            TEST_DB_HOSTNAME: localhost
+            TEST_DB_PORT: 5432
+            TEST_DB_DATABASE: geoso_test
+            TEST_DB_SCHEMA: geoso
         steps:
             - name: CHECKOUT CODE
               uses: actions/checkout@v2
