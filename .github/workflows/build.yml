@@ -38,7 +38,7 @@ jobs:
         env:
             SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
             TEST_DB_USER: postgres
-            TEST_DB_PASS: post123456
+            TEST_DB_PASS: postgres
             TEST_DB_HOSTNAME: localhost
             TEST_DB_PORT: 5432
             TEST_DB_DATABASE: geoso_test
