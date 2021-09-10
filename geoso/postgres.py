@@ -187,6 +187,7 @@ class PostgresHandler:
 
     def db_exists(self):
         try:
+            print(self.db_url)
             t = sqlalchemy_utils.database_exists(self.db_url)
             return t
         except:
