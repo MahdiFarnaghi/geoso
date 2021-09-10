@@ -30,6 +30,7 @@ class PostgresHandler:
     expected_db_version = 2
 
     def __init__(self, DB_HOSTNAME, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_SCHEMA):
+
         if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '':
             DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA = EnvVar.get_db_env_variables()
 
@@ -43,8 +44,11 @@ class PostgresHandler:
                             'host': DB_HOSTNAME,
                             'port': DB_PORT,
                             'database': DB_DATABASE}
+
         self.db_schema = DB_SCHEMA if DB_SCHEMA != '' and DB_SCHEMA is not None else 'public'
+
         self.db_url = URL(**self.postgres_db)
+
         self.db_version = None
         self.engine = None
         self.db_is_checked = False
@@ -124,7 +128,8 @@ class PostgresHandler:
                             Column('lang', String(5), nullable=True),
                             Column('user_id', BigInteger,
                                    ForeignKey('twitter_user.id')),
-                            Column('user_screen_name', String(100), nullable=True),
+                            Column('user_screen_name',
+                                   String(100), nullable=True),
                             Column('country', String(100), nullable=True),
                             Column('country_code', String(5), nullable=True),
                             Column('x', Numeric, nullable=True),
@@ -197,6 +202,7 @@ class PostgresHandler:
 
     def check_db(self):
         if not self.db_is_checked:
+
             self.engine = create_engine(
                 self.db_url, isolation_level="AUTOCOMMIT", pool_size=10, max_overflow=20)
 

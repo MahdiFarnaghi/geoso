@@ -9,9 +9,8 @@ class Test_PostgresHandler(TestCase):
     """Test for 'geoso.postgres' module. """
 
     def setUp(self) -> None:
-        self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME, self.DB_PASSWORD, _, self.DB_SCHEMA = EnvVar.get_db_env_variables()
-        self.DB_DATABASE = 'test_geoso'
-        # TODO: What if .env file is not available or it does not have database connection info
+        self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME, self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA = EnvVar.get_test_db_env_variables()
+        
         self.postgres = PostgresHandler(
             self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
 

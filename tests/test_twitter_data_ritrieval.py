@@ -21,5 +21,5 @@ class Test_Geoso(unittest.TestCase):
         """Test the retrieve_data_streaming_api function of the package"""  
 
         #TODO: debug retrieve data      
-        retrieve_data_streaming_api()
+        # retrieve_data_streaming_api()
         assert True
