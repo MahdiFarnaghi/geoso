@@ -37,13 +37,17 @@ class PostgresHandler:
         if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '':
             raise ValueError(
                 'DB_HOSTNAME, DB_PORT, DB_DATABASE, DB_USERNAME or DB_PASSWORD where not provided properly. These variables were not found as Environmental Variables as well.')
-
+            
         self.postgres_db = {'drivername': 'postgresql',
                             'username': DB_USERNAME,
                             'password': DB_PASSWORD,
                             'host': DB_HOSTNAME,
                             'port': DB_PORT,
                             'database': DB_DATABASE}
+
+        print("+"*60)
+        print(self.postgres_db)
+        print("+"*60)
 
         self.db_schema = DB_SCHEMA if DB_SCHEMA != '' and DB_SCHEMA is not None else 'public'
 
@@ -187,7 +191,7 @@ class PostgresHandler:
 
     def db_exists(self):
         try:
-            print(self.db_url)
+            # print(self.db_url)
             t = sqlalchemy_utils.database_exists(self.db_url)
             return t
         except:
