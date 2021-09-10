@@ -44,12 +44,7 @@ class PostgresHandler:
                             'host': DB_HOSTNAME,
                             'port': DB_PORT,
                             'database': DB_DATABASE}
-
-        print("+"*60)
-        print("__init__")
-        print(self.postgres_db)
-        print("+"*60)
-
+        
         self.db_schema = DB_SCHEMA if DB_SCHEMA != '' and DB_SCHEMA is not None else 'public'
 
         self.db_url = URL(**self.postgres_db)

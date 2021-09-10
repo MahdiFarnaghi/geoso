@@ -18,14 +18,30 @@ test_data_path = os.path.join(
     Path(os.path.realpath(__file__)).parent, 'test_data')
 test_data_jsonl_folder_path = os.path.join(test_data_path, 'jsonl')
 
-#TODO: Change the implementation to use a local database, e.g., using https://pypi.org/project/pytest-postgresql/ or https://pypi.org/project/testing.postgresql/
+
 class Test_TweetReaderWriter(unittest.TestCase):
     """Tests for `geoso.reader_writer` module."""
 
     def setUp(self) -> None:
+        self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME, self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA = EnvVar.get_test_db_env_variables()
+        
+        self.postgres = PostgresHandler(
+            self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
+
+        try:
+            sqlalchemy_utils.functions.drop_database(self.postgres.db_url)
+        except:
+            pass
         pass
 
-    def tearDown(self):                
+        self.postgres = PostgresHandler(
+            self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
+
+    def tearDown(self):
+        try:
+            sqlalchemy_utils.functions.drop_database(self.postgres.db_url)
+        except:
+            pass
         pass
 
     def test_jsonl_folder_to_postgres(self):
