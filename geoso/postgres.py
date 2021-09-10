@@ -187,7 +187,8 @@ class PostgresHandler:
 
     def db_exists(self):
         try:
-            return sqlalchemy_utils.database_exists(self.db_url)
+            t = sqlalchemy_utils.database_exists(self.db_url)
+            return t
         except:
             res = self.engine.execute(
                 f"select exists(SELECT datname FROM pg_catalog.pg_database WHERE lower(datname) = lower('{self.db_url.database}'));")
