@@ -15,6 +15,8 @@ jobs:
             fail-fast: false
             matrix:
                 config:
+                    # The library is only tested on Linux because at the moment the other OS on GitHub Actions does not support docker container.
+                    # Therefore, the postgres service won't be available for testing.
                     # - { os: windows-latest, py: "3.7" }
                     # - { os: macOS-latest, py: "3.7" }
                     - { os: ubuntu-latest, py: "3.6" }
