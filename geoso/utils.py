@@ -30,7 +30,7 @@ class EnvVar:
 
         # Default settings of the test database, which is also set for GitHub Postgres service in workflows/build.yml file
         if db_hostname is None or db_port is None or db_user is None or db_pass is None or db_database is None:
-            db_hostname = 'postgres'
+            db_hostname = 'localhost'
             db_port = 5432
             db_user = 'postgres'
             db_pass = 'postgres'
