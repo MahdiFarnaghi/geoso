@@ -23,26 +23,9 @@ class Test_TweetReaderWriter(unittest.TestCase):
     """Tests for `geoso.reader_writer` module."""
 
     def setUp(self) -> None:
-        self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME, self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA = EnvVar.get_db_env_variables()
-        # self.DB_DATABASE = 'test_geoso'
-        # # TODO: What if .env file is not available or it does not have database connection info
-        # self.postgres = PostgresHandler(
-        #     self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
+        pass
 
-        # try:
-        #     sqlalchemy_utils.functions.drop_database(self.postgres.db_url)
-        # except:
-        #     pass
-        # pass
-
-        self.postgres = PostgresHandler(
-            self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
-
-    def tearDown(self):        
-        # try:
-        #     sqlalchemy_utils.functions.drop_database(self.postgres.db_url)
-        # except:
-        #     pass
+    def tearDown(self):                
         pass
 
     def test_jsonl_folder_to_postgres(self):

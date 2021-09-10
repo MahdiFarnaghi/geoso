@@ -46,6 +46,7 @@ class PostgresHandler:
                             'database': DB_DATABASE}
 
         print("+"*60)
+        print("__init__")
         print(self.postgres_db)
         print("+"*60)
 
