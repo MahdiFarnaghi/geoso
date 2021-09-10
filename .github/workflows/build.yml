@@ -48,8 +48,10 @@ jobs:
                   pip install --user --no-cache-dir Cython
                   pip install --user -r requirements.txt
                   pip install --user -r requirements_dev.txt
-            - name: PKG-TEST
-              run: python -m unittest discover tests/
+            - name: PKG-TEST              
+              if: runner.os == 'Linux'
+              run: 
+                python -m unittest discover tests/
               env:
                 TEST_DB_USER: postgres
                 TEST_DB_PASS: postgres
