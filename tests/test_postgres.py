@@ -14,10 +14,6 @@ class Test_PostgresHandler(TestCase):
         self.postgres = PostgresHandler(
             self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
 
-        print("/"*60)
-        print(self.postgres.postgres_db)
-        print("/"*60)
-
         try:
             sqlalchemy_utils.functions.drop_database(self.postgres.db_url)
         except:
