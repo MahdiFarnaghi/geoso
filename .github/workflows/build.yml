@@ -37,12 +37,6 @@ jobs:
 
         env:
             SDKROOT: /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk
-            TEST_DB_USER: postgres
-            TEST_DB_PASS: postgres
-            TEST_DB_HOSTNAME: localhost
-            TEST_DB_PORT: 5432
-            TEST_DB_DATABASE: geoso_test
-            TEST_DB_SCHEMA: geoso
         steps:
             - name: CHECKOUT CODE
               uses: actions/checkout@v2
@@ -57,5 +51,11 @@ jobs:
                   pip install --user -r requirements.txt
                   pip install --user -r requirements_dev.txt
             - name: PKG-TEST
-              run: |
-                  python -m unittest discover tests/                  
+              run: python -m unittest discover tests/
+              env:
+                  TEST_DB_USER: postgres
+                  TEST_DB_PASS: postgres
+                  TEST_DB_HOSTNAME: localhost
+                  TEST_DB_PORT: 5432
+                  TEST_DB_DATABASE: geoso_test
+                  TEST_DB_SCHEMA: geoso
