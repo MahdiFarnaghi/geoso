@@ -1,10 +1,13 @@
 from pathlib import Path
-
+import pytz
 from dotenv import load_dotenv
 from contextlib import contextmanager
 import sys
 import os
 import tempfile
+import traceback
+from email.utils import mktime_tz, parsedate_tz
+from datetime import datetime
 
 load_dotenv()
 
@@ -59,6 +62,24 @@ class Folders:
     def make_parent_dir_with_check(file_path: Path):
         if not Path(file_path).parent.exists():
             Folders.check_make_dir(file_path.parent)
+
+
+def print_error():
+    print('-' * 60)
+    print("Unexpected error:", sys.exc_info()[0])
+    print('-' * 60)
+    traceback.print_exc(file=sys.stdout)
+    print('-' * 60)
+
+
+def parse_datetime_to_system_local_time(value):
+    time_tuple = parsedate_tz(value)
+    timestamp = mktime_tz(time_tuple)
+    return datetime.fromtimestamp(timestamp)
+
+
+def parse_datetime_to_timezone(value, time_zone):
+    return datetime.strptime(value, '%a %b %d %H:%M:%S %z %Y').astimezone(pytz.timezone(time_zone))
 
 
 @contextmanager

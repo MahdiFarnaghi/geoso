@@ -5,11 +5,9 @@ from datetime import datetime
 from tqdm import tqdm
 from pathlib import Path
 
-from email.utils import mktime_tz, parsedate_tz
 from datetime import datetime
-import pytz
 
-from .utils import suppress_stdout, Folders
+from .utils import suppress_stdout, Folders, print_error
 from .postgres import PostgresHandler_Tweets
 import abc
 import gzip
@@ -20,14 +18,12 @@ import shutil
 
 class TweetReaderWriter:
 
-    postgres = None
-
     @staticmethod
     def export_postgres_to_csv(file_path: str, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, overwrite_file=True,
-                                    db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
-                                    verbose=False):
+                               db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                               verbose=False):
 
-        TweetReaderWriter.check_postgres(
+        postgres = TweetReaderWriter.get_postgres(
             db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
 
         try:
@@ -41,7 +37,8 @@ class TweetReaderWriter:
                 try:
                     os.remove(file_path)
                 except:
-                    raise Exception('The file already exists and it is not possible to delete it.')
+                    raise Exception(
+                        'The file already exists and it is not possible to delete it.')
 
         _start_date = None
         _end_date = None
@@ -50,10 +47,10 @@ class TweetReaderWriter:
             _start_date = datetime.strptime(start_date, "%Y-%m-%d")
             _end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except:
-            raise ValueError('start_date or end_date are note provided in proper format. The date string should be provided as yyyy-mm-dd.')
-      
+            raise ValueError(
+                'start_date or end_date are note provided in proper format. The date string should be provided as yyyy-mm-dd.')
 
-        df, num = TweetReaderWriter.postgres.read_data_from_postgres(
+        df, num = postgres.read_data_from_postgres(
             _start_date, _end_date, min_x, min_y, max_x, max_y, table_name, tag, lang, verbose)
 
         if num > 0 and df is not None:
@@ -64,16 +61,16 @@ class TweetReaderWriter:
 
     @staticmethod
     def import_jsonl_folder_to_postgres(folder_path: str,
-                                             move_imported_to_folder=False,
-                                             continue_on_error=True,
-                                             start_date: datetime = None,
-                                             end_date: datetime = None,
-                                             force_insert=True,
-                                             bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
-                                             tag='',
-                                             numb_of_tweets_per_hour_allowed_for_user=.5,
-                                             clean_text=False,
-                                             db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
+                                        move_imported_to_folder=False,
+                                        continue_on_error=True,
+                                        start_date: datetime = None,
+                                        end_date: datetime = None,
+                                        force_insert=True,
+                                        bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
+                                        tag='',
+                                        numb_of_tweets_per_hour_allowed_for_user=.5,
+                                        clean_text=False,
+                                        db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
 
         if not os.path.exists(folder_path):
             raise ValueError(f"The folder ({folder_path}) does not exist!")
@@ -83,22 +80,21 @@ class TweetReaderWriter:
             imported_folder_path = os.path.join(folder_path, 'imported')
             Folders.make_dir_with_check(imported_folder_path)
 
-        TweetReaderWriter.check_postgres(
-            db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
-
         number_of_tweets_inserted = 0
 
         pathlist = Path(folder_path).glob('**/*.json*')
         for path in pathlist:
             path_in_str = str(path)
             number_of_tweets_inserted += TweetReaderWriter.import_jsonl_file_to_postgres(path_in_str,
-                                                                                              continue_on_error,
-                                                                                              start_date, end_date,
-                                                                                              force_insert,
-                                                                                              bbox_w, bbox_e, bbox_n, bbox_s,
-                                                                                              tag,
-                                                                                              numb_of_tweets_per_hour_allowed_for_user,
-                                                                                              clean_text)
+                                                                                         continue_on_error,
+                                                                                         start_date, end_date,
+                                                                                         force_insert,
+                                                                                         bbox_w, bbox_e, bbox_n, bbox_s,
+                                                                                         tag,
+                                                                                         numb_of_tweets_per_hour_allowed_for_user,
+                                                                                         clean_text,
+                                                                                         db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
+
             if move_imported_to_folder:
                 shutil.move(path_in_str, os.path.join(
                     imported_folder_path, path.name))
@@ -107,14 +103,17 @@ class TweetReaderWriter:
 
     @staticmethod
     def import_jsonl_file_to_postgres(file_path: str,
-                                           continue_on_error=True,
-                                           start_date: datetime = None, end_date: datetime = None,
-                                           force_insert=True,
-                                           bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
-                                           tag='',
-                                           numb_of_tweets_per_hour_allowed_for_user=.5,
-                                           clean_text=False,
-                                           db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
+                                      continue_on_error=True,
+                                      start_date: datetime = None, end_date: datetime = None,
+                                      force_insert=True,
+                                      bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
+                                      tag='',
+                                      numb_of_tweets_per_hour_allowed_for_user=.5,
+                                      clean_text=False,
+                                      db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
+
+        postgres = TweetReaderWriter.get_postgres(
+            db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
 
         print(
             f"Import tweets from {os.path.basename(file_path)} to the postgres data.")
@@ -122,7 +121,7 @@ class TweetReaderWriter:
         if not os.path.exists(file_path):
             raise ValueError(f"The file ({file_path}) does not exist!")
 
-        TweetReaderWriter.check_postgres(
+        postgres = TweetReaderWriter.get_postgres(
             db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
 
         number_of_tweets_inserted = 0
@@ -132,20 +131,20 @@ class TweetReaderWriter:
                 file_path) if (line.strip()) != "")
             with gzip.open(file_path) as f:
                 with tqdm(total=num_lines, desc="File \t{}".format(os.path.basename(file_path)), position=0, leave=True) as pbar:
-                    number_of_tweets_inserted = TweetReaderWriter._jsonl_file_to_postgres(
-                        f, file_path, tag, num_lines, force_insert, clean_text, pbar, TweetReaderWriter.postgres)
+                    number_of_tweets_inserted = TweetReaderWriter._worker_jsonl_file_to_postgres(
+                        f, file_path, tag, num_lines, force_insert, clean_text, pbar, postgres)
         else:
             num_lines = sum(1 for line in open(
                 file_path) if (line.strip()) != "")
             with open(file_path, 'r', encoding='utf-8') as f:
                 with tqdm(total=num_lines, position=0, leave=True) as pbar:
-                    number_of_tweets_inserted = TweetReaderWriter._jsonl_file_to_postgres(
-                        f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error, pbar, TweetReaderWriter.postgres)
+                    number_of_tweets_inserted = TweetReaderWriter._worker_jsonl_file_to_postgres(
+                        f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error, pbar, postgres)
         print(f"\t{number_of_tweets_inserted} tweets imported.")
         return number_of_tweets_inserted
 
     @staticmethod
-    def _jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error,
+    def _worker_jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error,
                                 pbar, postgres):
 
         chunks = 100
@@ -184,18 +183,8 @@ class TweetReaderWriter:
         return number_of_tweets_inserted
 
     @staticmethod
-    def check_postgres(db_username, db_password, db_hostname, db_port, db_database, db_schema):
-        if TweetReaderWriter.postgres is None:
-            TweetReaderWriter.postgres = PostgresHandler_Tweets(
-                DB_DATABASE=db_database, DB_HOSTNAME=db_hostname, DB_PORT=db_port, DB_USERNAME=db_username, DB_PASSWORD=db_password, DB_SCHEMA=db_schema)
-            TweetReaderWriter.postgres.check_db()
-
-    @staticmethod
-    def _parse_datetime_to_system_local_time(value):
-        time_tuple = parsedate_tz(value)
-        timestamp = mktime_tz(time_tuple)
-        return datetime.fromtimestamp(timestamp)
-
-    @staticmethod
-    def _parse_datetime_to_timezone(value, time_zone):
-        return datetime.strptime(value, '%a %b %d %H:%M:%S %z %Y').astimezone(pytz.timezone(time_zone))
+    def get_postgres(db_username, db_password, db_hostname, db_port, db_database, db_schema):
+        postgres = PostgresHandler_Tweets(
+            DB_DATABASE=db_database, DB_HOSTNAME=db_hostname, DB_PORT=db_port, DB_USERNAME=db_username, DB_PASSWORD=db_password, DB_SCHEMA=db_schema)
+        postgres.check_db()
+        return postgres

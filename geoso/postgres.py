@@ -209,11 +209,7 @@ class PostgresHandler:
                 self.db_url, isolation_level="AUTOCOMMIT", pool_size=10, max_overflow=20)
 
             if not self.db_exists():
-                url = copy(make_url(self.db_url))
-                url.database = 'postgres'
-                engine = create_engine(url, isolation_level="AUTOCOMMIT")
-                engine.execute("CREATE DATABASE {};".format(
-                    self.db_url.database))
+                sqlalchemy_utils.create_database(self.db_url)
 
             if self.db_schema != 'public':
                 self.engine.execute(
@@ -314,6 +310,7 @@ class PostgresHandler_Tweets(PostgresHandler):
     def bulk_insert_geotagged_tweets(self, tweets: list, country_code: str = '', bbox_w=0, bbox_e=0, bbox_n=0,
                                      bbox_s=0, tag='', force_insert=False, clean_text=False):
         self.check_db()
+        num_inserted_tweets = 0
         lst_users = []
         lst_tweets = []
         lst_tweet_ids = []
@@ -379,8 +376,10 @@ class PostgresHandler_Tweets(PostgresHandler):
                 self.engine.execute(pg_insert(self.table_twitter_user).on_conflict_do_nothing(index_elements=['id']),
                                     lst_users)
             if len(lst_tweets) > 0:
-                self.engine.execute(pg_insert(self.table_tweet).on_conflict_do_nothing(index_elements=['id']),
+                res = self.engine.execute(pg_insert(self.table_tweet).on_conflict_do_nothing(index_elements=['id']),
                                     lst_tweets)
+                num_inserted_tweets = res.rowcount
+
             if len(lst_hashtags) > 0:
                 self.engine.execute(pg_insert(self.table_hashtag).on_conflict_do_nothing(index_elements=['value']),
                                     lst_hashtags)
@@ -391,7 +390,7 @@ class PostgresHandler_Tweets(PostgresHandler):
                                     f"   (SELECT hashtag.id FROM {self.db_schema}.hashtag WHERE hashtag.value = %(value)s)"
                                     ") ON CONFLICT (tweet_id, hashtag_id) DO NOTHING;",
                                     lst_tweet_hashtags)
-        return len(lst_tweets)
+        return num_inserted_tweets
 
     def bulk_insert_tweets(self, tweets: list, tag='', force_insert=False):
         self.check_db()

@@ -10,7 +10,6 @@ import json
 import traceback
 import sys
 from dotenv import load_dotenv
-import traceback
 import time
 from urllib3.exceptions import ProtocolError
 
