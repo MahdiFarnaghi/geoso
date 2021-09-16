@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from contextlib import contextmanager
 import sys
 import os
+import tempfile
 
 load_dotenv()
 
@@ -43,10 +44,8 @@ class EnvVar:
 class Folders:
     @staticmethod
     def get_temp_folder():
-        p = os.path.join(os.getenv('APPDATA'), 'gttm')
-        if not os.path.exists(p):
-            os.makedirs(str(p))
-        return Path(p)
+        tmp = tempfile.mkdtemp()
+        return tmp
 
     @staticmethod
     def make_dir_with_check(folder_path: str):

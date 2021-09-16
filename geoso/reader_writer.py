@@ -22,8 +22,48 @@ class TweetReaderWriter:
 
     postgres = None
 
-    @abc.abstractmethod
-    def import_from_jsonl_folder_to_postgres(folder_path: str,
+    @staticmethod
+    def export_postgres_to_csv(file_path: str, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, overwrite_file=True,
+                                    db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                                    verbose=False):
+
+        TweetReaderWriter.check_postgres(
+            db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
+
+        try:
+            Folders.make_parent_dir_with_check(file_path=file_path)
+        except:
+            raise Exception(
+                f'Parent folder of the specified file ({file_path}) is not accessible.')
+
+        if Path(file_path).exists():
+            if overwrite_file:
+                try:
+                    os.remove(file_path)
+                except:
+                    raise Exception('The file already exists and it is not possible to delete it.')
+
+        _start_date = None
+        _end_date = None
+
+        try:
+            _start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            _end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except:
+            raise ValueError('start_date or end_date are note provided in proper format. The date string should be provided as yyyy-mm-dd.')
+      
+
+        df, num = TweetReaderWriter.postgres.read_data_from_postgres(
+            _start_date, _end_date, min_x, min_y, max_x, max_y, table_name, tag, lang, verbose)
+
+        if num > 0 and df is not None:
+            df.to_csv(file_path)
+        else:
+            print(
+                'No record in the database satisfied the conditions. No file was created.')
+
+    @staticmethod
+    def import_jsonl_folder_to_postgres(folder_path: str,
                                              move_imported_to_folder=False,
                                              continue_on_error=True,
                                              start_date: datetime = None,
@@ -51,7 +91,7 @@ class TweetReaderWriter:
         pathlist = Path(folder_path).glob('**/*.json*')
         for path in pathlist:
             path_in_str = str(path)
-            number_of_tweets_inserted += TweetReaderWriter.import_from_jsonl_file_to_postgres(path_in_str,
+            number_of_tweets_inserted += TweetReaderWriter.import_jsonl_file_to_postgres(path_in_str,
                                                                                               continue_on_error,
                                                                                               start_date, end_date,
                                                                                               force_insert,
@@ -65,8 +105,8 @@ class TweetReaderWriter:
 
         return number_of_tweets_inserted
 
-    @abc.abstractmethod
-    def import_from_jsonl_file_to_postgres(file_path: str,
+    @staticmethod
+    def import_jsonl_file_to_postgres(file_path: str,
                                            continue_on_error=True,
                                            start_date: datetime = None, end_date: datetime = None,
                                            force_insert=True,
@@ -130,32 +170,32 @@ class TweetReaderWriter:
                 num = 0
                 with suppress_stdout():
                     try:
-                      num = postgres.bulk_insert_geotagged_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
-                                                                tag=tag)
+                        num = postgres.bulk_insert_geotagged_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
+                                                                    tag=tag)
                     except:
                         if continue_on_error:
                             print('Error in inserting tweets')
                         else:
-                            raise Exception('Error in inserting tweets')                      
-                    
+                            raise Exception('Error in inserting tweets')
+
                 number_of_tweets_inserted += num
                 pbar.update(len(tweet_lines_to_insert))
                 tweet_lines_to_insert.clear()
         return number_of_tweets_inserted
 
-    @abstractmethod
+    @staticmethod
     def check_postgres(db_username, db_password, db_hostname, db_port, db_database, db_schema):
         if TweetReaderWriter.postgres is None:
             TweetReaderWriter.postgres = PostgresHandler_Tweets(
                 DB_DATABASE=db_database, DB_HOSTNAME=db_hostname, DB_PORT=db_port, DB_USERNAME=db_username, DB_PASSWORD=db_password, DB_SCHEMA=db_schema)
             TweetReaderWriter.postgres.check_db()
 
-    @abstractclassmethod
+    @staticmethod
     def _parse_datetime_to_system_local_time(value):
         time_tuple = parsedate_tz(value)
         timestamp = mktime_tz(time_tuple)
         return datetime.fromtimestamp(timestamp)
 
-    @abstractclassmethod
+    @staticmethod
     def _parse_datetime_to_timezone(value, time_zone):
         return datetime.strptime(value, '%a %b %d %H:%M:%S %z %Y').astimezone(pytz.timezone(time_zone))

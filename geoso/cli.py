@@ -9,7 +9,7 @@ from geoso.twitter_data_retrieval import retrieve_data_streaming_api
 
 
 @click.command()
-@click.option('--command', default='help', help='One of the following: import_from_jsonl_folder_to_postgres, retrieve_data_streaming_api')
+@click.option('--command', default='help', help='One of the following: import_jsonl_folder_to_postgres, retrieve_data_streaming_api')
 @click.option('--folder', default='', help='The folder path.')
 @click.option('--move_imported_to_folder', default=False, help='Move every file that is imported to a sub-folder, named imported.')
 @click.option('--continue_on_error', default=True, help='Continue the operation even if an error happens.')
@@ -40,8 +40,8 @@ def main(command, folder, move_imported_to_folder, continue_on_error, db_usernam
         click.echo(ctx.get_help())
         ctx.exit()
 
-    elif command == 'import_from_jsonl_folder_to_postgres':
-        TweetReaderWriter.import_from_jsonl_folder_to_postgres(folder, move_imported_to_folder=move_imported_to_folder, continue_on_error=continue_on_error, db_username=db_username, db_password=db_password, db_hostname=db_hostname,
+    elif command == 'import_jsonl_folder_to_postgres':
+        TweetReaderWriter.import_jsonl_folder_to_postgres(folder, move_imported_to_folder=move_imported_to_folder, continue_on_error=continue_on_error, db_username=db_username, db_password=db_password, db_hostname=db_hostname,
                                                                db_port=db_port, db_database=db_database, db_schema=db_schema)
     elif command == 'retrieve_data_streaming_api':
         retrieve_data_streaming_api(consumer_key, consumer_secret, access_token, access_secret, save_data_mode,

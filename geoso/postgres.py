@@ -258,12 +258,16 @@ class PostgresHandler_Tweets(PostgresHandler):
         self.engine.execute(sql)
         pass
 
-    def read_data_from_postgres(self, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', verbose=False, lang=None):
+    def read_data_from_postgres(self, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, verbose=False):
         # todo: check if the table exists and catch any error
         if verbose:
             print('\tStart reading data ...')
         s_time = datetime.now()
 
+        if min_x is None or min_y is None or max_x is None or max_y is None or start_date is None or end_date is None:
+            raise ValueError(
+                "Either date arguments (start_date and end_date) or bounding box arguments (x_min, y_min, x_max, and y_max) are not provided properly.")
+        
         start = datetime(year=start_date.year, month=start_date.month,
                          day=start_date.day, hour=start_date.hour, minute=start_date.minute)
         end = datetime(year=end_date.year, month=end_date.month,
@@ -274,7 +278,7 @@ class PostgresHandler_Tweets(PostgresHandler):
             " t_datetime > %s AND " \
             " t_datetime <= %s AND " \
             " x >= %s AND x < %s AND" \
-            " y >= %s AND y < %s ".format(table_name)
+            " y >= %s AND y < %s ".format(f"{self.db_schema}.{table_name}")
 
         if tag != '':
             sql = sql + " AND tag=\'{}\'".format(tag)
