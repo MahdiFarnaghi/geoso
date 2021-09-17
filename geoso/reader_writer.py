@@ -20,12 +20,14 @@ class TweetReaderWriter:
 
     @staticmethod
     def export_postgres_to_csv(file_path: str, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, overwrite_file=True,
-                               db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                               db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='', 
                                verbose=False):
 
         postgres = TweetReaderWriter.get_postgres(
             db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
 
+        if file_path == '' or file_path is None:
+            raise ValueError('file_path was not specified.')
         try:
             Folders.make_parent_dir_with_check(file_path=file_path)
         except:
@@ -48,13 +50,22 @@ class TweetReaderWriter:
             _end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except:
             raise ValueError(
-                'start_date or end_date are note provided in proper format. The date string should be provided as yyyy-mm-dd.')
+                'start_date or end_date were not provided, or they were not in proper formats. The date string should be provided as yyyy-mm-dd.')
 
+        #TODO: The columns arg is neglected. Add it.
         df, num = postgres.read_data_from_postgres(
-            _start_date, _end_date, min_x, min_y, max_x, max_y, table_name, tag, lang, verbose)
+            start_date=_start_date, end_date=_end_date, min_x=min_x, min_y=min_y, max_x=max_x, max_y= max_y, table_name=table_name, tag=tag, lang=lang, verbose=verbose)
 
         if num > 0 and df is not None:
+            if verbose:
+                print('\tStart writting data to the file ...')
+            s_time = datetime.now()
             df.to_csv(file_path)
+
+            dur = datetime.now() - s_time
+            if verbose:
+                print('\tWriting data was finished ({} seconds).'.format(dur.seconds))
+                print(f'File: {file_path}')
         else:
             print(
                 'No record in the database satisfied the conditions. No file was created.')
@@ -70,7 +81,8 @@ class TweetReaderWriter:
                                         tag='',
                                         numb_of_tweets_per_hour_allowed_for_user=.5,
                                         clean_text=False,
-                                        db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
+                                        db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                                        verbose=False):
 
         if not os.path.exists(folder_path):
             raise ValueError(f"The folder ({folder_path}) does not exist!")
@@ -145,7 +157,7 @@ class TweetReaderWriter:
 
     @staticmethod
     def _worker_jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error,
-                                pbar, postgres):
+                                       pbar, postgres):
 
         chunks = 100
         number_of_tweets_inserted = 0

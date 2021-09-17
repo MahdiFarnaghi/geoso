@@ -12,6 +12,8 @@ from datetime import datetime
 load_dotenv()
 
 
+#TODO: Add a print function. Every print should go through this function. It should have level, color, etc.
+
 class EnvVar:
     @staticmethod
     def get_db_env_variables():

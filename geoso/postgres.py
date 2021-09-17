@@ -37,14 +37,14 @@ class PostgresHandler:
         if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '':
             raise ValueError(
                 'DB_HOSTNAME, DB_PORT, DB_DATABASE, DB_USERNAME or DB_PASSWORD where not provided properly. These variables were not found as Environmental Variables as well.')
-            
+
         self.postgres_db = {'drivername': 'postgresql',
                             'username': DB_USERNAME,
                             'password': DB_PASSWORD,
                             'host': DB_HOSTNAME,
                             'port': DB_PORT,
                             'database': DB_DATABASE}
-        
+
         self.db_schema = DB_SCHEMA if DB_SCHEMA != '' and DB_SCHEMA is not None else 'public'
 
         self.db_url = URL(**self.postgres_db)
@@ -254,7 +254,7 @@ class PostgresHandler_Tweets(PostgresHandler):
         self.engine.execute(sql)
         pass
 
-    def read_data_from_postgres(self, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, verbose=False):
+    def read_data_from_postgres(self, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, columns: list = ['id', 'x', 'y', 't'], verbose=False):
         # todo: check if the table exists and catch any error
         if verbose:
             print('\tStart reading data ...')
@@ -263,30 +263,35 @@ class PostgresHandler_Tweets(PostgresHandler):
         if min_x is None or min_y is None or max_x is None or max_y is None or start_date is None or end_date is None:
             raise ValueError(
                 "Either date arguments (start_date and end_date) or bounding box arguments (x_min, y_min, x_max, and y_max) are not provided properly.")
-        
+
         start = datetime(year=start_date.year, month=start_date.month,
                          day=start_date.day, hour=start_date.hour, minute=start_date.minute)
         end = datetime(year=end_date.year, month=end_date.month,
                        day=end_date.day, hour=end_date.hour, minute=end_date.minute)
-        sql = F" SELECT * " \
-            " FROM  {} " \
+
+        col = ','.join(columns) if columns is not None and len(
+            columns) > 0 else '*'
+        sql = F" SELECT {col} FROM  {self.db_schema}.{table_name} " \
             " WHERE " \
             " t_datetime > %s AND " \
             " t_datetime <= %s AND " \
             " x >= %s AND x < %s AND" \
-            " y >= %s AND y < %s ".format(f"{self.db_schema}.{table_name}")
+            " y >= %s AND y < %s "
 
-        if tag != '':
+        if tag is not None and tag != '':
             sql = sql + " AND tag=\'{}\'".format(tag)
 
-        if lang is not None:
+        if lang is not None and lang != '':
             sql = sql + F" AND lang=\'{lang}\' "
 
         self.check_db()
 
         tweets = pd.read_sql_query(
             sql, self.engine, params=(start, end, min_x, max_x, min_y, max_y))
-        tweets['t_datetime'] = tweets['t'].apply(pd.Timestamp.fromtimestamp)
+        
+        if 't' in columns:
+            tweets['t_datetime'] = tweets['t'].apply(pd.Timestamp.fromtimestamp)
+        
         number_of_tweets = tweets.id.count()
 
         dur = datetime.now() - s_time
@@ -377,7 +382,7 @@ class PostgresHandler_Tweets(PostgresHandler):
                                     lst_users)
             if len(lst_tweets) > 0:
                 res = self.engine.execute(pg_insert(self.table_tweet).on_conflict_do_nothing(index_elements=['id']),
-                                    lst_tweets)
+                                          lst_tweets)
                 num_inserted_tweets = res.rowcount
 
             if len(lst_hashtags) > 0:
