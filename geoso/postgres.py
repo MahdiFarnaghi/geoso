@@ -31,8 +31,9 @@ class PostgresHandler:
 
     def __init__(self, DB_HOSTNAME, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_SCHEMA):
 
-        if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '':
-            DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA = EnvVar.get_db_env_variables()
+        #TODO: read the variables one by one. 
+        if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '' or DB_HOSTNAME is None or DB_PORT is None or DB_DATABASE is None or DB_USERNAME is None:
+            DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA = EnvVar.get_db_env_variables_if_none(DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA)
 
         if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '':
             raise ValueError(

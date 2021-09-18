@@ -12,7 +12,7 @@ from datetime import datetime
 load_dotenv()
 
 
-#TODO: Add a print function. Every print should go through this function. It should have level, color, etc.
+# TODO: Add a print function. Every print should go through this function. It should have level, color, etc.
 
 class EnvVar:
     @staticmethod
@@ -23,6 +23,28 @@ class EnvVar:
         db_pass = os.getenv('DB_PASS')
         db_database = os.getenv('DB_DATABASE')
         db_schema = os.getenv('DB_SCHEMA')
+        return db_hostname, db_port, db_user, db_pass, db_database, db_schema
+
+    def get_db_env_variables_if_none(db_hostname, db_port, db_user, db_pass, db_database, db_schema):
+
+        if db_hostname is None or db_hostname == '':
+            db_hostname = os.getenv('DB_HOSTNAME')
+
+        if db_port is None or db_port == '':
+            db_port = os.getenv('DB_PORT')
+
+        if db_user is None or db_user == '':
+            db_user = os.getenv('DB_USER')
+
+        if db_pass is None or db_pass == '':
+            db_pass = os.getenv('DB_PASS')
+
+        if db_database is None or db_database == '':
+            db_database = os.getenv('DB_DATABASE')
+
+        if db_schema is None or db_schema == '':
+            db_schema = os.getenv('DB_SCHEMA')
+
         return db_hostname, db_port, db_user, db_pass, db_database, db_schema
 
     @staticmethod
