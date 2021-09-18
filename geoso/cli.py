@@ -4,7 +4,7 @@
 
 from logging import warning
 import click
-from geoso.reader_writer import TweetReaderWriter
+from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv
 from geoso.twitter_data_retrieval import retrieve_data_streaming_api
 
 
@@ -37,7 +37,7 @@ def import_jsonl_folder_to_postgres(ctx, folder_path, move_imported_to_folder, c
                                     db_username, db_password, db_hostname, db_port, db_database, db_schema):
     if ctx.obj['verbose']:
         click.echo('Executing import_jsonl_folder_to_postgres')
-    TweetReaderWriter.import_jsonl_folder_to_postgres(folder_path, move_imported_to_folder=move_imported_to_folder, continue_on_error=continue_on_error, db_username=db_username, db_password=db_password, db_hostname=db_hostname,
+    twitter_import_jsonl_folder_to_postgres(folder_path, move_imported_to_folder=move_imported_to_folder, continue_on_error=continue_on_error, db_username=db_username, db_password=db_password, db_hostname=db_hostname,
                                                       db_port=db_port, db_database=db_database, db_schema=db_schema,
                                                       verbose=ctx.obj['verbose'])
 
@@ -65,7 +65,7 @@ def export_postgres_to_csv(ctx, file_path, start_date, end_date, min_x, min_y, m
                            db_username, db_password, db_hostname, db_port, db_database, db_schema):
     if ctx.obj['verbose']:
         click.echo('Executing export_postgres_to_csv')
-    TweetReaderWriter.export_postgres_to_csv(file_path, start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language, overwrite_file,
+    twitter_export_postgres_to_csv(file_path, start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language, overwrite_file,
                                              db_username, db_password, db_hostname, db_port, db_database, db_schema,
                                              ctx.obj['verbose'])
 

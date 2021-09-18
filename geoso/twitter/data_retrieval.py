@@ -1,5 +1,5 @@
-from .postgres import PostgresHandler_Tweets
-from .utils import Folders
+from ..postgres import PostgresHandler_Tweets
+from ..utils import Folders
 import tweepy
 from tweepy import OAuthHandler
 from tweepy import Stream
@@ -14,7 +14,8 @@ import time
 from urllib3.exceptions import ProtocolError
 
 
-def retrieve_data_streaming_api(consumer_key=None, consumer_secret=None, access_token=None, access_secret=None, save_data_mode=None,
+#TODO: Add a max number of tweets parameter
+def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None, access_token=None, access_secret=None, save_data_mode=None,
                                 tweets_output_folder=None, area_name='',  min_x=None, max_x=None, min_y=None, max_y=None,
                                 languages=None, db_hostname=None, db_port=None, db_database=None, db_schema='Public', db_user=None, db_password=None):
     load_dotenv()
