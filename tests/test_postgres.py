@@ -3,32 +3,22 @@ import sqlalchemy_utils
 
 from geoso.utils import EnvVar
 from geoso.postgres import PostgresHandler
-
+from test_helper import drop_create_database, drop_database
 
 class Test_PostgresHandler(TestCase):
     """Test for 'geoso.postgres' module. """
 
     def setUp(self) -> None:
         self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME, self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA = EnvVar.get_test_db_env_variables()
-        
-        self.postgres = PostgresHandler(
-            self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
-
-        try:
-            sqlalchemy_utils.functions.drop_database(self.postgres.db_url)
-        except:
-            pass
-        pass
+        drop_create_database(self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME,
+                             self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA)
 
         self.postgres = PostgresHandler(
             self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
 
     def tearDown(self):
-        try:
-            sqlalchemy_utils.functions.drop_database(self.postgres.db_url)
-        except:
-            pass
-        pass
+        drop_database(self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME,
+                      self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA)
 
     def test_check_db(self):
         self.assertTrue(

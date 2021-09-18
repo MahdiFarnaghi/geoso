@@ -27,7 +27,6 @@ def main(ctx, verbose):
 @click.option('--folder_path', default='', help='The folder path.', type=click.Path(), required=True)
 @click.option('--move_imported_to_folder', default=False, help='Move every file that is imported to a sub-folder, named imported.')
 @click.option('--continue_on_error', default=True, help='Continue the operation even if an error happens.')
-# TODO: read from envvar https://click.palletsprojects.com/en/8.0.x/options/#values-from-environment-variables
 @click.option('--db_username', default='', help='Postgres database username', required=True)
 @click.option('--db_password', default='', help='Postgres database password', required=True)
 @click.option('--db_hostname', default='', help='Postgres database hostname', required=True)
@@ -56,7 +55,6 @@ def import_jsonl_folder_to_postgres(ctx, folder_path, move_imported_to_folder, c
 @click.option('--tag', default=None, help='The tag of the record in the database.')
 @click.option('--language', default=None, help='language code of the tweets to be retrieved.')
 @click.option('--overwrite_file', default=False, help='Overwrite the file if it exists.')
-# TODO: read from envvar https://click.palletsprojects.com/en/8.0.x/options/#values-from-environment-variables
 @click.option('--db_username', default='', help='Postgres database username', required=True)
 @click.option('--db_password', default='', help='Postgres database password', required=True)
 @click.option('--db_hostname', default='', help='Postgres database hostname', required=True)
@@ -86,7 +84,6 @@ def export_postgres_to_csv(ctx, file_path, start_date, end_date, min_x, min_y, m
 @click.option('--max_x', default=None, help='Maximum X (longitude) of the area for which the tweets will be retrieved.', required=True)
 @click.option('--max_y', default=None, help='Maximum Y (latitude) of the area for which the tweets will be retrieved.', required=True)
 @click.option('--language', default=None, help='language code of the tweets to be retrieved.')
-# TODO: read from envvar https://click.palletsprojects.com/en/8.0.x/options/#values-from-environment-variables
 @click.option('--db_username', default='', help='Postgres database username. Required if save_date_mode is set to DB.')
 @click.option('--db_password', default='', help='Postgres database password. Required if save_date_mode is set to DB.')
 @click.option('--db_hostname', default='', help='Postgres database hostname. Required if save_date_mode is set to DB.')
