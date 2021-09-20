@@ -10,6 +10,8 @@ twine
 grip
 autopep8
 Click
+colorama
+termcolor
 python-dotenv
 tweepy==3.9.0
 geoalchemy2==0.8.4

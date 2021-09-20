@@ -8,11 +8,39 @@ import tempfile
 import traceback
 from email.utils import mktime_tz, parsedate_tz
 from datetime import datetime
+from colorama import init
+from termcolor import cprint
+import enum
+
+init()
 
 load_dotenv()
 
+class Text_Categories(enum.Enum):
+    Process_start = 1
+    Process_end = 2
+    Process_description = 3
+    Process_time = 4
+    Error = 5
 
-# TODO: Add a print function. Every print should go through this function. It should have level, color, etc.
+
+def dprint(text, verbose=True, text_category=None, level=1):
+    if level >= 1:
+        _text = ' '*(level - 1) + text
+    else:
+        _text = text
+    if not verbose:
+        if text_category == Text_Categories.Process_start or text_category == Text_Categories.Process_end:
+            cprint(text, 'green')
+        elif text_category == Text_Categories.Process_description:
+            cprint(text, 'grey')
+        elif text_category == Text_Categories.Process_time:
+            cprint(text, 'blue')
+        elif text_category == Text_Categories.Error:
+            cprint(text, 'red')
+        else:
+            print(text)
+
 
 class EnvVar:
     @staticmethod
@@ -24,6 +52,13 @@ class EnvVar:
         db_database = os.getenv('DB_DATABASE')
         db_schema = os.getenv('DB_SCHEMA')
         return db_hostname, db_port, db_user, db_pass, db_database, db_schema
+
+    def get_twitter_credentials_env_variables():
+        consumer_key = os.getenv('CONSUMER_KEY')
+        consumer_secret = os.getenv('CONSUMER_SECRET')
+        access_token = os.getenv('ACCESS_TOKEN')
+        access_secret = os.getenv('ACCESS_SECRET')
+        return consumer_key, consumer_secret, access_token, access_secret
 
     def get_db_env_variables_if_none(db_hostname, db_port, db_user, db_pass, db_database, db_schema):
 
@@ -55,17 +90,15 @@ class EnvVar:
         db_pass = os.getenv('TEST_DB_PASS')
         db_database = os.getenv('TEST_DB_DATABASE')
         db_schema = os.getenv('TEST_DB_SCHEMA')
-
-        # # Default settings of the test database, which is also set for GitHub Postgres service in workflows/build.yml file
-        # if db_hostname is None or db_port is None or db_user is None or db_pass is None or db_database is None:
-        #     db_hostname = '127.0.0.1'
-        #     db_port = 5432
-        #     db_user = 'postgres'
-        #     db_pass = 'postgres'
-        #     db_database = 'geoso_test'
-        #     db_schema = 'test'
-
         return db_hostname, db_port, db_user, db_pass, db_database, db_schema
+
+    @staticmethod
+    def get_test_twitter_credentials_env_variables():
+        consumer_key = os.getenv('TEST_CONSUMER_KEY')
+        consumer_secret = os.getenv('TEST_CONSUMER_SECRET')
+        access_token = os.getenv('TEST_ACCESS_TOKEN')
+        access_secret = os.getenv('TEST_ACCESS_SECRET')
+        return consumer_key, consumer_secret, access_token, access_secret
 
 
 class Folders:

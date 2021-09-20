@@ -7,7 +7,6 @@ import unittest
 from click.testing import CliRunner
 
 import geoso
-from geoso import cli
 
 
 class Test_Geoso(unittest.TestCase):

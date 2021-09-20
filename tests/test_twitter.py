@@ -87,7 +87,7 @@ class Test_Twitter(unittest.TestCase):
                 pass
 
             assert success
-
+    
     def test_retrieve_data_streaming_api(self):
         """Test the retrieve_data_streaming_api function of the package"""
 

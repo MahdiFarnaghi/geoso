@@ -1,5 +1,5 @@
 from ..postgres import PostgresHandler_Tweets
-from ..utils import Folders
+from ..utils import Folders, Text_Categories, dprint, EnvVar
 import tweepy
 from tweepy import OAuthHandler
 from tweepy import Stream
@@ -14,37 +14,33 @@ import time
 from urllib3.exceptions import ProtocolError
 
 
-#TODO: Add a max number of tweets parameter
 def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None, access_token=None, access_secret=None, save_data_mode=None,
-                                tweets_output_folder=None, area_name='',  min_x=None, max_x=None, min_y=None, max_y=None,
-                                languages=None, db_hostname=None, db_port=None, db_database=None, db_schema='Public', db_user=None, db_password=None):
+                                        tweets_output_folder=None, area_name='',  min_x=None, max_x=None, min_y=None, max_y=None,
+                                        languages=None, max_num_tweets=None, only_geotagged=True, db_hostname=None, db_port=None, db_database=None, db_schema='Public', db_user=None, db_password=None, verbose=True):
+    
+    dprint('Start: twitter_retrieve_data_streaming_api process', verbose=verbose,
+           text_category=Text_Categories.Process_start)
+
     load_dotenv()
-
-    print(60*"*")
-    print('Start Tweet Listener.')
-    print(60*"=")
-
+    
     if save_data_mode is None:
         save_data_mode = os.getenv('SAVE_DATA_MODE')
         if save_data_mode is None:
             save_data_mode = 'FILE'
-    print(f"Save data mode: {save_data_mode}")
+    dprint(f"Save data mode: {save_data_mode}", verbose=verbose)
 
     if consumer_key is None or consumer_secret is None or access_token is None or access_secret is None:
-        consumer_key = os.getenv('CONSUMER_KEY')
-        consumer_secret = os.getenv('CONSUMER_SECRET')
-        access_token = os.getenv('ACCESS_TOKEN')
-        access_secret = os.getenv('ACCESS_SECRET')
+        consumer_key, consumer_secret, access_token, access_secret = EnvVar.get_twitter_credentials_env_variables()
 
     if consumer_key is None or consumer_secret is None or access_token is None or access_secret is None:
         raise Exception(
             "Twitter authentication information (consumer_key, consumer_secret, access_token, and access_secret) was not provided properly.")
 
-    print('Authentication ...')
+    dprint('Authentication ...', verbose=verbose)
     auth = OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_secret)
     api = tweepy.API(auth)
-    print('Authentication was successful.')
+    dprint('Authentication was successful.', verbose=verbose)
 
     if min_x is None or min_y is None or max_x is None or max_y is None:
         min_x = float(os.getenv('MIN_X')) if os.getenv(
@@ -55,6 +51,8 @@ def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None,
             'MIN_Y') is not None else None
         max_y = float(os.getenv('MAX_Y')) if os.getenv(
             'MAX_Y') is not None else None
+
+    dprint(f"BBOX ({area_name}): {min_x}, {min_y}, {max_x}, {max_y}")
 
     if tweets_output_folder is None:
         tweets_output_folder = os.getenv('TWEETS_OUTPUT_FOLDER')
@@ -76,6 +74,7 @@ def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None,
 
     if languages is None:
         languages = os.getenv('LANGUAGES')
+        dprint(f"Languages: {', '.join(languages)}")
 
     if save_data_mode == 'FILE':
         if languages != '':
@@ -83,7 +82,11 @@ def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None,
             languages = [str.strip(lang) for lang in languages]
 
         _listen_to_tweets(area_name, tweets_output_folder, None,
-                          save_data_mode, auth, languages, min_x, min_y, max_x, max_y)
+                          save_data_mode, auth, languages, max_num_tweets, only_geotagged, min_x, min_y, max_x, max_y)
+        
+        dprint('End: twitter_retrieve_data_streaming_api process', verbose=verbose,
+           text_category=Text_Categories.Process_end)
+
 
     elif save_data_mode == 'DB':
         if db_hostname is None or db_port is None or db_user is None or db_password is None or db_database is None:
@@ -102,45 +105,42 @@ def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None,
         postgres_tweets = PostgresHandler_Tweets(
             db_hostname, db_port, db_database, db_user, db_password, db_schema)
 
-        print('Checking the database ...')
+        dprint('Checking the database ...')
 
         try:
             if postgres_tweets.check_db():
-                print(F"The database is accessible.")
+                dprint(F"The database is accessible.")
         except:
-            print('Database is not accessible!')
-            print('-' * 60)
-            print("Unexpected error:", sys.exc_info()[0])
-            print('-' * 60)
-            traceback.print_exc(file=sys.stdout)
-            print('-' * 60)
+            dprint('Database is not accessible!')
+            dprint('-' * 60)
+            dprint("Unexpected error:", sys.exc_info()[0])
+            dprint('-' * 60)
+            traceback.print_decorated_exc(file=sys.stdout)
+            dprint('-' * 60)
             sys.exit(2)
 
         _listen_to_tweets(area_name, None, postgres_tweets,
-                          save_data_mode, auth, languages, min_x, min_y, max_x, max_y)
+                          save_data_mode, auth, languages, max_num_tweets, only_geotagged, min_x, min_y, max_x, max_y, verbose)
 
 
-def _listen_to_tweets(area_name, output_folder, postgres, save_data_mode, auth, languages: list, min_x, min_y, max_x, max_y):
-    print(60*"*")
+def _listen_to_tweets(area_name, output_folder, postgres, save_data_mode, auth, languages: list, max_num_tweets, only_geotagged, min_x, min_y, max_x, max_y, verbose=False):
 
-    print('Initializing the listener ...')
-    print(f"BBOX ({area_name}): {min_x}, {min_y}, {max_x}, {max_y}")
-    print(f"Languages: {', '.join(languages)}")
+    dprint('Initializing the listener ...', verbose=verbose)
+
     listener = TwitterStreamListener()
-    listener.init(area_name=area_name,  output_folder=output_folder,
-                  postgres=postgres, save_data_mode=save_data_mode)
-    WorldStream = Stream(auth, listener)
-    # if len(languages) > 0:
-    #     WorldStream.filter(languages=languages, locations=[min_x, min_y, max_x, max_y])
-    # else:
-    #     WorldStream.filter(locations=[min_x, min_y, max_x, max_y])
-    while True:
+    listener.init(area_name=area_name, output_folder=output_folder,
+                  postgres=postgres, save_data_mode=save_data_mode, max_num_tweets=max_num_tweets, only_geotagged=only_geotagged)
+    _stream = Stream(auth, listener)
+
+    stop_flag = False
+    while not stop_flag:
         try:
             if len(languages) > 0:
-                WorldStream.filter(languages=languages, locations=[
-                                   min_x, min_y, max_x, max_y])
+                _stream.filter(languages=languages, locations=[
+                    min_x, min_y, max_x, max_y])
             else:
-                WorldStream.filter(locations=[min_x, min_y, max_x, max_y])
+                _stream.filter(locations=[min_x, min_y, max_x, max_y])
+            stop_flag = listener.enough_collected()
         except (ProtocolError, AttributeError):
             continue
 
@@ -166,87 +166,84 @@ def _parse_tweet(data):
         return tweet
 
     else:
-        print("Error in parsing tweet: %s" % tweet)
+        dprint("Error in parsing tweet: %s" % tweet)
         # logger.warning("Incomplete tweet: %s", tweet)
 
 
 class TwitterStreamListener(StreamListener):
 
+    def enough_collected(self):
+        if self.max_num_tweets is None:
+            return False
+        elif self.num_saved_tweets >= self.max_num_tweets:
+            return True
+        else:
+            return False
+
     def on_data(self, data):
         insert_list_length = 100
         insert_list_waiting_seconds = 60
         try:
-            self.tweetnumber += 1
+            self.num_received_tweets += 1
             tweet = _parse_tweet(data)
             now = datetime.datetime.now()
 
-            if self.save_geotweets and tweet['geo'] is None:
+            if self.only_geotagged and tweet['geo'] is None:
                 return
 
             if self.save_data_mode == 'DB':
-                self.geotweetnumber += 1
+                self.num_saved_tweets += 1
                 self.tweets.append(data)
-                print('.', end='')
+                dprint('.', end='')
                 time_from_last_insert_seconds = time.time() - self.last_insert_time
-                if len(self.tweets) >= insert_list_length or time_from_last_insert_seconds > insert_list_waiting_seconds:
+                if len(self.tweets) >= insert_list_length or time_from_last_insert_seconds > insert_list_waiting_seconds or self.enough_collected():
                     self.postgres.bulk_insert_geotagged_tweets(self.tweets, country_code='', bbox_w=0, bbox_e=0, bbox_n=0,
                                                                bbox_s=0, tag='', force_insert=True)
-                    print(
-                        f"\n{len(self.tweets)} tweets were inserted into the database.")
+                    self.write_tweet_saved(now)
                     self.tweets.clear()
                     self.last_insert_time = time.time()
-
-                # if self.postgres.upsert_tweet(data):
-                #     self.write_tweet_saved(
-                #         self.geotweetnumber, self.tweetnumber, self.save_data_mode, now)
-                # else:
-                #     print('The tweet could not be saved.')
             else:
-                #print('Tweet number ' + str(self.tweetnumber) + ' in ' + self.area_name)
                 filenameJson = self.output_folder + os.sep + self.area_name.lower() + \
                     os.sep + now.strftime('%Y%m%d-%H') + ".json"
                 directory = os.path.dirname(filenameJson)
                 if not os.path.exists(directory):
                     os.makedirs(directory)
 
-                # print(tweet['text'].encode('unicode_escape'))
                 with open(filenameJson, 'a') as f:
                     f.write(data)
-                    self.geotweetnumber += 1
-                    self.write_tweet_saved(
-                        self.geotweetnumber, self.tweetnumber, self.save_data_mode, now)
+                    self.num_saved_tweets += 1
+                    if self.num_saved_tweets % 10 == 0 or self.enough_collected():
+                        self.write_tweet_saved(now)
+
                     return True
 
         except BaseException as e:
-            print("Error on_data: %s" % str(e))
-            # traceback.print_exc(file=sys.stdout)
-            #print('No GeoTag, not saved.')
-            # print("----------------------")
+            dprint("Error on_data: %s" % str(e))
+
         return True
 
-    def write_tweet_saved(self, geotweetnumber, tweetnumber, save_data_mode, dt):
-        # print("----------------------")
-        print(F"{save_data_mode}: {str(geotweetnumber)} tweet saved out of {str(tweetnumber)}, at " +
-              dt.strftime("%Y%m%d-%H:%M:%S"))
-        # print(self.postgres.number_of_tweets())
-        # print("----------------------")
+    def write_tweet_saved(self, dt):
+        dprint(F"{self.save_data_mode}: {str(self.num_saved_tweets)} tweet saved out of {str(self.num_saved_tweets)}, at " +
+               dt.strftime("%Y%m%d-%H:%M:%S"))
 
     def on_error(self, status):
-        print(status)
+        dprint(status)
         return True
 
-    def init(self,  area_name: str, output_folder: str, postgres: PostgresHandler_Tweets, save_data_mode='FILE', save_geotweets=True):
-        print("Intializing Twitter's listener object.")
-       
+    def init(self,  area_name: str, output_folder: str, postgres: PostgresHandler_Tweets, save_data_mode='FILE', only_geotagged=True,
+             max_num_tweets: int = None):
+        dprint("Intializing Twitter's listener object.")
+
         self.save_data_mode = save_data_mode
         self.output_folder = output_folder
         self.area_name = area_name
-        self.tweetnumber = 0
-        self.geotweetnumber = 0
+        self.num_received_tweets = 0
+        self.num_saved_tweets = 0
         self.postgres = postgres
-        self.save_geotweets = save_geotweets
+        self.only_geotagged = only_geotagged
         self.tweets = []
         self.last_insert_time = time.time()
+        self.max_num_tweets = max_num_tweets if max_num_tweets is not None and max_num_tweets > 0 else None
 
         if self.save_data_mode == 'DB':
             if self.postgres is None:
@@ -259,8 +256,6 @@ class TwitterStreamListener(StreamListener):
             raise Exception(
                 F'The specified save_data_mode ({self.save_data_mode}) is not supported.')
         # self.logger = logging.getLogger(self.output_folder + os.sep + 'log')
-        print('Initialization was successful.\n\n\n')
-        print('+'*60)
-        print('Saving geotagged tweets in ' + area_name + ' started')
-        print('+'*60)
-        print('\n')
+        dprint('Initialization was successful.\n\n\n')
+        dprint('Saving geotagged tweets in ' + area_name + ' started')
+        dprint('\n')
