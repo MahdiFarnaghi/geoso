@@ -27,7 +27,7 @@ class Text_Categories(enum.Enum):
 
 def dprint(text, verbose=True, text_category=None, level=1):
     if level >= 1:
-        _text = ' '*(level - 1) + text
+        _text = ' '*(level - 1) + str(text)
     else:
         _text = text
     if verbose:
