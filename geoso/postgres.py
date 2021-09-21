@@ -31,9 +31,10 @@ class PostgresHandler:
 
     def __init__(self, DB_HOSTNAME, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_SCHEMA):
 
-        #TODO: read the variables one by one. 
+        # TODO: read the variables one by one.
         if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '' or DB_HOSTNAME is None or DB_PORT is None or DB_DATABASE is None or DB_USERNAME is None:
-            DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA = EnvVar.get_db_env_variables_if_none(DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA)
+            DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA = EnvVar.get_db_env_variables_if_none(
+                DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA)
 
         if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '':
             raise ValueError(
@@ -289,10 +290,11 @@ class PostgresHandler_Tweets(PostgresHandler):
 
         tweets = pd.read_sql_query(
             sql, self.engine, params=(start, end, min_x, max_x, min_y, max_y))
-        
+
         if 't' in columns:
-            tweets['t_datetime'] = tweets['t'].apply(pd.Timestamp.fromtimestamp)
-        
+            tweets['t_datetime'] = tweets['t'].apply(
+                pd.Timestamp.fromtimestamp)
+
         number_of_tweets = tweets.id.count()
 
         dur = datetime.now() - s_time
@@ -313,8 +315,9 @@ class PostgresHandler_Tweets(PostgresHandler):
         else:
             return None
 
-    def bulk_insert_geotagged_tweets(self, tweets: list, country_code: str = '', bbox_w=0, bbox_e=0, bbox_n=0,
-                                     bbox_s=0, tag='', force_insert=False, clean_text=False):
+    def bulk_insert_tweets(self, tweets: list, country_code: str = '', tag='',
+                           only_geotagged=False, bbox_w=None, bbox_e=None, bbox_n=None, bbox_s=None,
+                           force_insert=False, clean_text=False):
         self.check_db()
         num_inserted_tweets = 0
         lst_users = []
@@ -335,12 +338,16 @@ class PostgresHandler_Tweets(PostgresHandler):
                 else:
                     x = float(tweet_json['geo']['coordinates'][1])
                     y = float(tweet_json['geo']['coordinates'][0])
-            if x is None or y is None:
-                add_it = False
-            if bbox_e != 0 and bbox_n != 0 and bbox_s != 0 and bbox_w:
-                if not (x >= bbox_w and x <= bbox_e and y <= bbox_n and y >= bbox_s):
+            if only_geotagged:
+                if x is None or y is None:
                     add_it = False
-            elif country_code != '':
+
+                if bbox_e is not None and bbox_n is not None and bbox_s is not None and bbox_w is not None:
+                    if x is not None and y is not None:
+                        if not (x >= bbox_w and x <= bbox_e and y <= bbox_n and y >= bbox_s):
+                            add_it = False
+            
+            if country_code != '':
                 try:
                     if country_code != tweet_json['place']['country_code']:
                         add_it = False
@@ -398,84 +405,84 @@ class PostgresHandler_Tweets(PostgresHandler):
                                     lst_tweet_hashtags)
         return num_inserted_tweets
 
-    def bulk_insert_tweets(self, tweets: list, tag='', force_insert=False):
-        self.check_db()
-        lst_users = []
-        lst_tweets = []
-        lst_tweet_ids = []
-        lst_hashtags = []
-        lst_tweet_hashtags = []
-        for t in tweets:
-            tweet_json = json.loads(t)
-            x = None
-            y = None
-            add_it = True
-            if tweet_json['coordinates'] is not None or tweet_json['geo'] is not None:
-                # source: https://developer.twitter.com/en/docs/tutorials/filtering-tweets-by-location
-                if tweet_json['coordinates'] is not None:
-                    x = float(tweet_json['coordinates']['coordinates'][0])
-                    y = float(tweet_json['coordinates']['coordinates'][1])
-                else:
-                    x = float(tweet_json['geo']['coordinates'][1])
-                    y = float(tweet_json['geo']['coordinates'][0])
-            # if x is None or y is None:
-            #     add_it = False
+    # def bulk_insert_tweets(self, tweets: list, tag='', force_insert=False):
+    #     self.check_db()
+    #     lst_users = []
+    #     lst_tweets = []
+    #     lst_tweet_ids = []
+    #     lst_hashtags = []
+    #     lst_tweet_hashtags = []
+    #     for t in tweets:
+    #         tweet_json = json.loads(t)
+    #         x = None
+    #         y = None
+    #         add_it = True
+    #         if tweet_json['coordinates'] is not None or tweet_json['geo'] is not None:
+    #             # source: https://developer.twitter.com/en/docs/tutorials/filtering-tweets-by-location
+    #             if tweet_json['coordinates'] is not None:
+    #                 x = float(tweet_json['coordinates']['coordinates'][0])
+    #                 y = float(tweet_json['coordinates']['coordinates'][1])
+    #             else:
+    #                 x = float(tweet_json['geo']['coordinates'][1])
+    #                 y = float(tweet_json['geo']['coordinates'][0])
+    #         # if x is None or y is None:
+    #         #     add_it = False
 
-            cleaned_text = ''
-            lang_supported = False
-            num_of_words = 0
-            _text = ''
-            if 'text' in tweet_json:
-                _text = tweet_json['text']
-            elif 'full_text' in tweet_json:
-                _text = tweet_json['full_text']
-            else:
-                add_it = False
+    #         cleaned_text = ''
+    #         lang_supported = False
+    #         num_of_words = 0
+    #         _text = ''
+    #         if 'text' in tweet_json:
+    #             _text = tweet_json['text']
+    #         elif 'full_text' in tweet_json:
+    #             _text = tweet_json['full_text']
+    #         else:
+    #             add_it = False
 
-            if add_it:
-                if tweet_json['lang'] is not None and TextCleaner.is_lang_supported(tweet_json['lang']):
-                    cleaned_text, num_of_words, lang_full_name = TextCleaner.clean_text(_text,
-                                                                                        tweet_json['lang'])
-                    lang_supported = True
-                else:
-                    cleaned_text = ''
-                    num_of_words = len(str(_text).split())
-                    lang_supported = False
+    #         if add_it:
+    #             if tweet_json['lang'] is not None and TextCleaner.is_lang_supported(tweet_json['lang']):
+    #                 cleaned_text, num_of_words, lang_full_name = TextCleaner.clean_text(_text,
+    #                                                                                     tweet_json['lang'])
+    #                 lang_supported = True
+    #             else:
+    #                 cleaned_text = ''
+    #                 num_of_words = len(str(_text).split())
+    #                 lang_supported = False
 
-            if num_of_words < PostgresHandler.min_acceptable_num_words_in_tweet:
-                add_it = False
+    #         if num_of_words < PostgresHandler.min_acceptable_num_words_in_tweet:
+    #             add_it = False
 
-            if add_it:
-                self._add_tweet_to_insert_list(_text, cleaned_text, lang_supported, lst_hashtags, lst_tweet_hashtags,
-                                               lst_tweet_ids, lst_tweets, lst_users, tag, tweet_json, x, y)
+    #         if add_it:
+    #             self._add_tweet_to_insert_list(_text, cleaned_text, lang_supported, lst_hashtags, lst_tweet_hashtags,
+    #                                            lst_tweet_ids, lst_tweets, lst_users, tag, tweet_json, x, y)
 
-        if force_insert:
-            if len(lst_tweet_ids) > 0:
-                with self.engine.begin():
-                    self.engine.execute(
-                        f"DELETE FROM {self.db_schema}.tweet WHERE tweet.id in ({','.join(str(x) for x in lst_tweet_ids)});")
+    #     if force_insert:
+    #         if len(lst_tweet_ids) > 0:
+    #             with self.engine.begin():
+    #                 self.engine.execute(
+    #                     f"DELETE FROM {self.db_schema}.tweet WHERE tweet.id in ({','.join(str(x) for x in lst_tweet_ids)});")
 
-        if len(lst_tweets) > 0:
-            with self.engine.begin():
-                if len(lst_users) > 0:
-                    self.engine.execute(
-                        pg_insert(self.table_twitter_user).on_conflict_do_nothing(
-                            index_elements=['id']),
-                        lst_users)
-                if len(lst_tweets) > 0:
-                    self.engine.execute(pg_insert(self.table_tweet).on_conflict_do_nothing(index_elements=['id']),
-                                        lst_tweets)
-                if len(lst_hashtags) > 0:
-                    self.engine.execute(pg_insert(self.table_hashtag).on_conflict_do_nothing(index_elements=['value']),
-                                        lst_hashtags)
-                if len(lst_tweet_hashtags) > 0:
-                    self.engine.execute(f"INSERT INTO {self.db_schema}.tweet_hashtag(tweet_id, hashtag_id) "
-                                        "VALUES("
-                                        "   %(tweet_id)s, "
-                                        f"   (SELECT hashtag.id FROM {self.db_schema}.hashtag WHERE hashtag.value = %(value)s)"
-                                        ") ON CONFLICT (tweet_id, hashtag_id) DO NOTHING;",
-                                        lst_tweet_hashtags)
-        return len(lst_tweets)
+    #     if len(lst_tweets) > 0:
+    #         with self.engine.begin():
+    #             if len(lst_users) > 0:
+    #                 self.engine.execute(
+    #                     pg_insert(self.table_twitter_user).on_conflict_do_nothing(
+    #                         index_elements=['id']),
+    #                     lst_users)
+    #             if len(lst_tweets) > 0:
+    #                 self.engine.execute(pg_insert(self.table_tweet).on_conflict_do_nothing(index_elements=['id']),
+    #                                     lst_tweets)
+    #             if len(lst_hashtags) > 0:
+    #                 self.engine.execute(pg_insert(self.table_hashtag).on_conflict_do_nothing(index_elements=['value']),
+    #                                     lst_hashtags)
+    #             if len(lst_tweet_hashtags) > 0:
+    #                 self.engine.execute(f"INSERT INTO {self.db_schema}.tweet_hashtag(tweet_id, hashtag_id) "
+    #                                     "VALUES("
+    #                                     "   %(tweet_id)s, "
+    #                                     f"   (SELECT hashtag.id FROM {self.db_schema}.hashtag WHERE hashtag.value = %(value)s)"
+    #                                     ") ON CONFLICT (tweet_id, hashtag_id) DO NOTHING;",
+    #                                     lst_tweet_hashtags)
+    #     return len(lst_tweets)
 
     def _add_tweet_to_insert_list(self, _text, cleaned_text, lang_supported, lst_hashtags, lst_tweet_hashtags,
                                   lst_tweet_ids, lst_tweets, lst_users, tag, tweet_json, x, y):
@@ -689,7 +696,8 @@ class PostgresHandler_Tweets(PostgresHandler):
         return False
 
     def number_of_tweets(self):
-        return self.engine.execute('SELECT count(*) FROM {self.db_schema}.tweet;').scalar()
+        self.check_db()
+        return self.engine.execute(F'SELECT count(*) FROM {self.db_schema}.tweet;').scalar()
 
     def update_geom(self):
         updateQuery = "update public.tweet set geom4326=ST_SetSRID(ST_MakePoint(x, y), 4326);"

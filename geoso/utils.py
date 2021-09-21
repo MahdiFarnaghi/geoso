@@ -11,6 +11,7 @@ from datetime import datetime
 from colorama import init
 from termcolor import cprint
 import enum
+import shutil
 
 init()
 
@@ -29,15 +30,15 @@ def dprint(text, verbose=True, text_category=None, level=1):
         _text = ' '*(level - 1) + text
     else:
         _text = text
-    if not verbose:
+    if verbose:
         if text_category == Text_Categories.Process_start or text_category == Text_Categories.Process_end:
-            cprint(text, 'green')
+            cprint(_text, 'green')
         elif text_category == Text_Categories.Process_description:
-            cprint(text, 'grey')
+            cprint(_text, 'grey')
         elif text_category == Text_Categories.Process_time:
-            cprint(text, 'blue')
+            cprint(_text, 'blue')
         elif text_category == Text_Categories.Error:
-            cprint(text, 'red')
+            cprint(_text, 'red')
         else:
             print(text)
 
@@ -119,7 +120,8 @@ class Folders:
     def make_parent_dir_with_check(file_path: Path):
         if not Path(file_path).parent.exists():
             Folders.check_make_dir(file_path.parent)
-
+    
+    
 
 def print_error():
     print('-' * 60)

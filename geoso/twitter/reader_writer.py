@@ -179,7 +179,7 @@ def _worker_jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, c
             num = 0
             with suppress_stdout():
                 try:
-                    num = postgres.bulk_insert_geotagged_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
+                    num = postgres.bulk_insert_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
                                                                 tag=tag)
                 except:
                     if continue_on_error:

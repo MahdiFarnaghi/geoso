@@ -1,3 +1,4 @@
+from geoso.postgres import PostgresHandler_Tweets
 import unittest
 import os
 from pathlib import Path
@@ -5,9 +6,11 @@ import csv
 import traceback
 import sqlalchemy_utils
 from sqlalchemy_utils.functions.database import drop_database
+from geoso import utils
+import shutil
 
 from geoso.utils import EnvVar, Folders
-from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv
+from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv, twitter_retrieve_data_streaming_api
 from test_helper import drop_create_database, drop_database
 
 
@@ -87,10 +90,66 @@ class Test_Twitter(unittest.TestCase):
                 pass
 
             assert success
-    
-    def test_retrieve_data_streaming_api(self):
-        """Test the retrieve_data_streaming_api function of the package"""
 
-        # TODO: debug retrieve data
-        # retrieve_data_streaming_api()
-        assert True
+    def test_twitter_retrieve_data_streaming_api(self):
+        """Test the twitter_retrieve_data_streaming_api function of the package"""
+
+        consumer_key, consumer_secret, access_token, access_secret = EnvVar.get_test_twitter_credentials_env_variables()
+
+        save_data_mode = 'FILE'
+        tweets_output_folder = Folders.get_temp_folder()
+        area_name = 'London'
+        min_x = -1
+        max_x = 1
+        min_y = 51
+        max_y = 52
+        languages = 'en'
+        max_num_tweets = 5
+        only_geotagged = False
+        verbose = True
+
+        # twitter_retrieve_data_streaming_api(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_secret=access_secret, save_data_mode=save_data_mode,
+        #                                     tweets_output_folder=tweets_output_folder, area_name=area_name,  min_x=min_x, max_x=max_x, min_y=min_y, max_y=max_y,
+        #                                     languages=languages, max_num_tweets=max_num_tweets, only_geotagged=only_geotagged, verbose=verbose)
+
+        # num_tweets_in_file = 0
+        # pathlist = Path(tweets_output_folder).glob('**/*.json*')
+        # for path in pathlist:
+        #     path_in_str = str(path)
+        #     with open(path_in_str, 'r') as f:
+        #         lines = f.readlines()
+        #         for line in lines:
+        #             if line.strip() != '':
+        #                 num_tweets_in_file += 1
+        # try:
+        #     shutil.rmtree(tweets_output_folder)
+        # except:
+        #     pass
+
+        # assert num_tweets_in_file == max_num_tweets
+
+        save_data_mode = 'DB'
+        tweets_output_folder = ''
+        area_name = 'London'
+        min_x = -1
+        max_x = 1
+        min_y = 51
+        max_y = 52
+        languages = 'en'
+        max_num_tweets = 5
+        only_geotagged = False
+        verbose = True
+        twitter_retrieve_data_streaming_api(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_secret=access_secret, save_data_mode=save_data_mode,
+                                            tweets_output_folder=tweets_output_folder, area_name=area_name,  min_x=min_x, max_x=max_x, min_y=min_y, max_y=max_y,
+                                            languages=languages, max_num_tweets=max_num_tweets, only_geotagged=only_geotagged,
+                                            db_database=self.DB_DATABASE,
+                                            db_hostname=self.DB_HOSTNAME,
+                                            db_password=self.DB_PASSWORD,
+                                            db_port=self.DB_PORT,
+                                            db_schema=self.DB_SCHEMA,
+                                            db_username=self.DB_USERNAME,
+                                            verbose=verbose)
+        self.postgres = PostgresHandler_Tweets(
+            self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
+
+        assert self.postgres.number_of_tweets() == max_num_tweets
