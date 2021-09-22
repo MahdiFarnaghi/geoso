@@ -271,7 +271,6 @@ class TwitterStreamListener(StreamListener):
             raise Exception(
                 F'The specified save_data_mode ({self.save_data_mode}) is not supported.')
         # self.logger = logging.getLogger(self.output_folder + os.sep + 'log')
-        dprint('Initialization was successful.\n', verbose=verbose)
-        dprint('Saving geotagged tweets in ' +
-               area_name + ' started', verbose=verbose)
-        dprint('\n')
+        dprint('Initialization was successful.', verbose=verbose)
+        dprint('Saving tweets in ' +
+               area_name + ' started', verbose=verbose)        

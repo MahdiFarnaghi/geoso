@@ -91,7 +91,7 @@ class Test_Twitter(unittest.TestCase):
 
             assert success
 
-    def test_twitter_retrieve_data_streaming_api(self):
+    def test_twitter_retrieve_data_streaming_api_save_to_file(self):
         """Test the twitter_retrieve_data_streaming_api function of the package"""
 
         consumer_key, consumer_secret, access_token, access_secret = EnvVar.get_test_twitter_credentials_env_variables()
@@ -108,25 +108,31 @@ class Test_Twitter(unittest.TestCase):
         only_geotagged = False
         verbose = True
 
-        # twitter_retrieve_data_streaming_api(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_secret=access_secret, save_data_mode=save_data_mode,
-        #                                     tweets_output_folder=tweets_output_folder, area_name=area_name,  min_x=min_x, max_x=max_x, min_y=min_y, max_y=max_y,
-        #                                     languages=languages, max_num_tweets=max_num_tweets, only_geotagged=only_geotagged, verbose=verbose)
+        twitter_retrieve_data_streaming_api(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_secret=access_secret, save_data_mode=save_data_mode,
+                                            tweets_output_folder=tweets_output_folder, area_name=area_name,  min_x=min_x, max_x=max_x, min_y=min_y, max_y=max_y,
+                                            languages=languages, max_num_tweets=max_num_tweets, only_geotagged=only_geotagged, verbose=verbose)
 
-        # num_tweets_in_file = 0
-        # pathlist = Path(tweets_output_folder).glob('**/*.json*')
-        # for path in pathlist:
-        #     path_in_str = str(path)
-        #     with open(path_in_str, 'r') as f:
-        #         lines = f.readlines()
-        #         for line in lines:
-        #             if line.strip() != '':
-        #                 num_tweets_in_file += 1
-        # try:
-        #     shutil.rmtree(tweets_output_folder)
-        # except:
-        #     pass
+        num_tweets_in_file = 0
+        pathlist = Path(tweets_output_folder).glob('**/*.json*')
+        for path in pathlist:
+            path_in_str = str(path)
+            with open(path_in_str, 'r') as f:
+                lines = f.readlines()
+                for line in lines:
+                    if line.strip() != '':
+                        num_tweets_in_file += 1
+        try:
+            shutil.rmtree(tweets_output_folder)
+        except:
+            pass
 
-        # assert num_tweets_in_file == max_num_tweets
+        print(F"Number of tweets saved in the FILE: {num_tweets_in_file}")
+        assert num_tweets_in_file == max_num_tweets
+
+    def test_twitter_retrieve_data_streaming_api_save_to_db(self):
+        """Test the twitter_retrieve_data_streaming_api function of the package"""
+
+        consumer_key, consumer_secret, access_token, access_secret = EnvVar.get_test_twitter_credentials_env_variables()
 
         save_data_mode = 'DB'
         tweets_output_folder = ''
@@ -136,7 +142,7 @@ class Test_Twitter(unittest.TestCase):
         min_y = 51
         max_y = 52
         languages = 'en'
-        max_num_tweets = 5
+        max_num_tweets = 10
         only_geotagged = False
         verbose = True
         twitter_retrieve_data_streaming_api(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_secret=access_secret, save_data_mode=save_data_mode,
@@ -152,4 +158,7 @@ class Test_Twitter(unittest.TestCase):
         self.postgres = PostgresHandler_Tweets(
             self.DB_HOSTNAME, self.DB_PORT, self.DB_DATABASE, self.DB_USERNAME, self.DB_PASSWORD, self.DB_SCHEMA)
 
-        assert self.postgres.number_of_tweets() == max_num_tweets
+        print(
+            F"Number of tweets saved in the DB: {self.postgres.number_of_tweets()}")
+        # assert self.postgres.number_of_tweets() == max_num_tweets
+        assert self.postgres.number_of_tweets() > 0
