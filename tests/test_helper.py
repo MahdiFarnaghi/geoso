@@ -9,6 +9,12 @@ from sqlalchemy_utils.functions.database import drop_database
 from geoso.utils import EnvVar, Folders, print_error
 from geoso.postgres import PostgresHandler
 
+test_data_path = os.path.join(
+    Path(os.path.realpath(__file__)).parent, 'test_data')
+test_data_jsonl_folder_path = os.path.join(test_data_path, 'jsonl')
+test_data_jsonl_file_path = os.path.join(
+    test_data_jsonl_folder_path, '20190626-18.json')
+
 def drop_database(DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA):
     try:
         postgres = PostgresHandler(

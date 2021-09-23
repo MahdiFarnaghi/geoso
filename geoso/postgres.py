@@ -346,7 +346,7 @@ class PostgresHandler_Tweets(PostgresHandler):
                     if x is not None and y is not None:
                         if not (x >= bbox_w and x <= bbox_e and y <= bbox_n and y >= bbox_s):
                             add_it = False
-            
+
             if country_code != '':
                 try:
                     if country_code != tweet_json['place']['country_code']:
@@ -698,6 +698,35 @@ class PostgresHandler_Tweets(PostgresHandler):
     def number_of_tweets(self):
         self.check_db()
         return self.engine.execute(F'SELECT count(*) FROM {self.db_schema}.tweet;').scalar()
+
+    def tweets_information_by_bounding_box(self,
+                           start_date: datetime, end_date: datetime,
+                           x_min: float, y_min: float, x_max: float, y_max: float,
+                           tag=None, lang=None) -> pd.DataFrame:
+
+        col = 'COUNT(*) AS num_tweets, MIN(t_datetime) AS min_date, MAX(t_datetime) AS max_date, MIN(x) AS min_x, MIN(y) as min_y, MAX(y) as max_y'
+
+        results = pd.read_sql_query(
+            self._get_select(col=col, db_schema=self.db_schema,
+                             table_name='tweet', tag=tag, lang=lang),
+            self.engine, params=(start_date, end_date, x_min, x_max, y_min, y_max))
+
+        return results
+
+    def _get_select(self, col: str, db_schema, table_name, tag, lang):
+        sql = F" SELECT {col} FROM  {db_schema}.{table_name} " \
+            " WHERE " \
+            " t_datetime > %s AND " \
+            " t_datetime <= %s AND " \
+            " x >= %s AND x < %s AND" \
+            " y >= %s AND y < %s "
+
+        if tag is not None and tag != '':
+            sql = sql + " AND tag=\'{}\'".format(tag)
+
+        if lang is not None and lang != '':
+            sql = sql + F" AND lang=\'{lang}\' "
+        return sql
 
     def update_geom(self):
         updateQuery = "update public.tweet set geom4326=ST_SetSRID(ST_MakePoint(x, y), 4326);"

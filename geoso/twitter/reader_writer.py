@@ -17,6 +17,22 @@ import shutil
 
 
 
+def twitter_tweets_information_in_database(start_date: datetime = None, end_date: datetime = None,
+                                         x_min: float = None, y_min: float = None, x_max: float = None, y_max: float = None,
+                                         db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                                         verbose=False):
+    _start_date = None
+    _end_date = None
+
+    if start_date is not None and end_date is not None:
+        try:
+            _start_date = datetime.strptime(start_date, "%Y-%m-%d")
+            _end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        except:
+            raise ValueError(
+                'start_date or end_date were not in proper formats. The date string should be provided as yyyy-mm-dd.')
+
+    pass
 
 def twitter_export_postgres_to_csv(file_path: str, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, overwrite_file=True,
                             db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='', 

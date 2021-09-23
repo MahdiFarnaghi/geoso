@@ -11,12 +11,7 @@ import shutil
 
 from geoso.utils import EnvVar, Folders
 from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv, twitter_retrieve_data_streaming_api
-from test_helper import drop_create_database, drop_database
-
-
-test_data_path = os.path.join(
-    Path(os.path.realpath(__file__)).parent, 'test_data')
-test_data_jsonl_folder_path = os.path.join(test_data_path, 'jsonl')
+from test_helper import drop_create_database, drop_database, test_data_jsonl_folder_path
 
 
 class Test_Twitter(unittest.TestCase):
