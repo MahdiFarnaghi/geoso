@@ -1,11 +1,11 @@
 # -*- coding: UTF8 -*-
 """Console script for geoso.
 """
-
 from logging import warning
 import click
-from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv
+from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv, twitter_get_tweets_information_in_database
 
+#TODO: Testing the CLI
 
 @click.group()
 @click.pass_context
@@ -19,6 +19,14 @@ def main(ctx, verbose):
     ctx.obj['verbose'] = verbose
 
     pass
+
+
+@main.command()
+@click.pass_context
+def test_cli(ctx):
+    if ctx.obj['verbose']:
+        click.echo('Executing test_cli')
+        click.echo('Execution finished successfully.')
 
 
 @main.command()
@@ -37,8 +45,8 @@ def import_jsonl_folder_to_postgres(ctx, folder_path, move_imported_to_folder, c
     if ctx.obj['verbose']:
         click.echo('Executing import_jsonl_folder_to_postgres')
     twitter_import_jsonl_folder_to_postgres(folder_path, move_imported_to_folder=move_imported_to_folder, continue_on_error=continue_on_error, db_username=db_username, db_password=db_password, db_hostname=db_hostname,
-                                                      db_port=db_port, db_database=db_database, db_schema=db_schema,
-                                                      verbose=ctx.obj['verbose'])
+                                            db_port=db_port, db_database=db_database, db_schema=db_schema,
+                                            verbose=ctx.obj['verbose'])
 
 
 @main.command()
@@ -65,9 +73,35 @@ def export_postgres_to_csv(ctx, file_path, start_date, end_date, min_x, min_y, m
     if ctx.obj['verbose']:
         click.echo('Executing export_postgres_to_csv')
     twitter_export_postgres_to_csv(file_path, start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language, overwrite_file,
-                                             db_username, db_password, db_hostname, db_port, db_database, db_schema,
-                                             ctx.obj['verbose'])
+                                   db_username, db_password, db_hostname, db_port, db_database, db_schema,
+                                   ctx.obj['verbose'])
 
+
+@main.command()
+@click.pass_context
+@click.option('--start_date', default=None, help='Start date (format: yyyy-mm-dd)', type=click.Path(), required=False)
+@click.option('--end_date', default=None, help='End date (format: yyyy-mm-dd)', type=click.Path(), required=False)
+@click.option('--min_x', default=None, help='Minimum X (longitude) of the area for which the tweets will be retrieved.', required=False)
+@click.option('--min_y', default=None, help='Minimum Y (latitude) of the area for which the tweets will be retrieved.', required=False)
+@click.option('--max_x', default=None, help='Maximum X (longitude) of the area for which the tweets will be retrieved.', required=False)
+@click.option('--max_y', default=None, help='Maximum Y (latitude) of the area for which the tweets will be retrieved.', required=False)
+@click.option('--tag', default=None, help='The tag of the record in the database.')
+@click.option('--language', default=None, help='language code of the tweets to be retrieved.')
+@click.option('--db_username', default='', help='Postgres database username. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
+@click.option('--db_password', default='', help='Postgres database password. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
+@click.option('--db_hostname', default='', help='Postgres database hostname. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
+@click.option('--db_port', default='', help='Postgres database port. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
+@click.option('--db_database', default='', help='Postgres database name. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
+@click.option('--db_schema', default='public', help='Postgres database schema. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
+def twitter_get_tweets_information_in_database(ctx, start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language,
+                           db_username, db_password, db_hostname, db_port, db_database, db_schema):
+    if ctx.obj['verbose']:
+        click.echo('Executing twitter_get_tweets_information_in_database')
+    twitter_get_tweets_information_in_database(start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language,
+                                               db_username, db_password, db_hostname, db_port, db_database, db_schema,
+                                               ctx.obj['verbose'])
+    if ctx.obj['verbose']:
+        click.echo('Execution finished successfully.')
 
 @main.command()
 @click.pass_context

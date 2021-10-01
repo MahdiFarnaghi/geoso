@@ -10,8 +10,8 @@ from geoso import utils
 import shutil
 
 from geoso.utils import EnvVar, Folders
-from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv, twitter_retrieve_data_streaming_api
-from test_helper import drop_create_database, drop_database, test_data_jsonl_folder_path
+from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv, twitter_retrieve_data_streaming_api, twitter_import_jsonl_file_to_postgres, twitter_get_tweets_information_in_database
+from test_helper import drop_create_database, drop_database, test_data_jsonl_folder_path, test_data_jsonl_file_path
 
 
 class Test_Twitter(unittest.TestCase):
@@ -39,6 +39,78 @@ class Test_Twitter(unittest.TestCase):
             db_username=self.DB_USERNAME)
 
         assert num_inserted > 0
+
+    def test_get_tweets_information_in_database(self):
+        num_inserted = twitter_import_jsonl_file_to_postgres(
+            test_data_jsonl_file_path,
+            continue_on_error=True,
+            db_database=self.DB_DATABASE,
+            db_hostname=self.DB_HOSTNAME,
+            db_password=self.DB_PASSWORD,
+            db_port=self.DB_PORT,
+            db_schema=self.DB_SCHEMA,
+            db_username=self.DB_USERNAME)
+
+        assert num_inserted > 0
+
+        start_date = '2019-01-01'
+        end_date = '2019-12-30'
+        x_min = -180
+        x_max = 180
+        y_min = -90
+        y_max = 90
+
+        df = twitter_get_tweets_information_in_database(
+            start_date=start_date,
+            end_date=end_date,
+            x_min=x_min,
+            x_max=x_max,
+            y_min=x_min,
+            y_max=y_max,
+            db_database=self.DB_DATABASE,
+            db_hostname=self.DB_HOSTNAME,
+            db_password=self.DB_PASSWORD,
+            db_port=self.DB_PORT,
+            db_schema=self.DB_SCHEMA,
+            db_username=self.DB_USERNAME)
+
+        assert df.iloc[0, 0] > 0
+
+        df = twitter_get_tweets_information_in_database(
+            start_date=start_date,
+            end_date=end_date,
+            db_database=self.DB_DATABASE,
+            db_hostname=self.DB_HOSTNAME,
+            db_password=self.DB_PASSWORD,
+            db_port=self.DB_PORT,
+            db_schema=self.DB_SCHEMA,
+            db_username=self.DB_USERNAME)
+
+        assert df.iloc[0, 0] > 0
+
+        df = twitter_get_tweets_information_in_database(
+            x_min=x_min,
+            x_max=x_max,
+            y_min=x_min,
+            y_max=y_max,
+            db_database=self.DB_DATABASE,
+            db_hostname=self.DB_HOSTNAME,
+            db_password=self.DB_PASSWORD,
+            db_port=self.DB_PORT,
+            db_schema=self.DB_SCHEMA,
+            db_username=self.DB_USERNAME)
+
+        assert df.iloc[0, 0] > 0
+
+        df = twitter_get_tweets_information_in_database(            
+            db_database=self.DB_DATABASE,
+            db_hostname=self.DB_HOSTNAME,
+            db_password=self.DB_PASSWORD,
+            db_port=self.DB_PORT,
+            db_schema=self.DB_SCHEMA,
+            db_username=self.DB_USERNAME)
+
+        assert df.iloc[0, 0] > 0
 
     def test_export_postgres_to_csv(self):
 

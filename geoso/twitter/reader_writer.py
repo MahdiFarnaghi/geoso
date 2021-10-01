@@ -14,13 +14,13 @@ import gzip
 import pathlib
 import json
 import shutil
+import pandas as pd
 
 
-
-def twitter_tweets_information_in_database(start_date: datetime = None, end_date: datetime = None,
-                                         x_min: float = None, y_min: float = None, x_max: float = None, y_max: float = None,
-                                         db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
-                                         verbose=False):
+def twitter_get_tweets_information_in_database(start_date: datetime = None, end_date: datetime = None,
+                                               x_min: float = None, y_min: float = None, x_max: float = None, y_max: float = None,
+                                               db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                                               verbose=False) -> pd.DataFrame:
     _start_date = None
     _end_date = None
 
@@ -29,14 +29,17 @@ def twitter_tweets_information_in_database(start_date: datetime = None, end_date
             _start_date = datetime.strptime(start_date, "%Y-%m-%d")
             _end_date = datetime.strptime(end_date, "%Y-%m-%d")
         except:
-            raise ValueError(
-                'start_date or end_date were not in proper formats. The date string should be provided as yyyy-mm-dd.')
+            pass
 
-    pass
+    postgres = _get_postgres(db_username=db_username, db_password=db_password,
+                             db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
+
+    return postgres.tweets_information_by_bbox_and_time(start_date=_start_date, end_date=_end_date, x_min=x_min, y_min=y_min, x_max=x_max, y_max=x_max)
+
 
 def twitter_export_postgres_to_csv(file_path: str, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, overwrite_file=True,
-                            db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='', 
-                            verbose=False):
+                                   db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                                   verbose=False):
 
     postgres = _get_postgres(
         db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
@@ -67,9 +70,9 @@ def twitter_export_postgres_to_csv(file_path: str, start_date: datetime, end_dat
         raise ValueError(
             'start_date or end_date were not provided, or they were not in proper formats. The date string should be provided as yyyy-mm-dd.')
 
-    #TODO: The columns arg is neglected. Add it.
+    # TODO: The columns arg is neglected. Add it.
     df, num = postgres.read_data_from_postgres(
-        start_date=_start_date, end_date=_end_date, min_x=min_x, min_y=min_y, max_x=max_x, max_y= max_y, table_name=table_name, tag=tag, lang=lang, verbose=verbose)
+        start_date=_start_date, end_date=_end_date, min_x=min_x, min_y=min_y, max_x=max_x, max_y=max_y, table_name=table_name, tag=tag, lang=lang, verbose=verbose)
 
     if num > 0 and df is not None:
         if verbose:
@@ -85,18 +88,19 @@ def twitter_export_postgres_to_csv(file_path: str, start_date: datetime, end_dat
         print(
             'No record in the database satisfied the conditions. No file was created.')
 
+
 def twitter_import_jsonl_folder_to_postgres(folder_path: str,
-                                    move_imported_to_folder=False,
-                                    continue_on_error=True,
-                                    start_date: datetime = None,
-                                    end_date: datetime = None,
-                                    force_insert=True,
-                                    bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
-                                    tag='',
-                                    numb_of_tweets_per_hour_allowed_for_user=.5,
-                                    clean_text=False,
-                                    db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
-                                    verbose=False):
+                                            move_imported_to_folder=False,
+                                            continue_on_error=True,
+                                            start_date: datetime = None,
+                                            end_date: datetime = None,
+                                            force_insert=True,
+                                            bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
+                                            tag='',
+                                            numb_of_tweets_per_hour_allowed_for_user=.5,
+                                            clean_text=False,
+                                            db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
+                                            verbose=False):
 
     if not os.path.exists(folder_path):
         raise ValueError(f"The folder ({folder_path}) does not exist!")
@@ -112,14 +116,14 @@ def twitter_import_jsonl_folder_to_postgres(folder_path: str,
     for path in pathlist:
         path_in_str = str(path)
         number_of_tweets_inserted += twitter_import_jsonl_file_to_postgres(path_in_str,
-                                                                                        continue_on_error,
-                                                                                        start_date, end_date,
-                                                                                        force_insert,
-                                                                                        bbox_w, bbox_e, bbox_n, bbox_s,
-                                                                                        tag,
-                                                                                        numb_of_tweets_per_hour_allowed_for_user,
-                                                                                        clean_text,
-                                                                                        db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
+                                                                           continue_on_error,
+                                                                           start_date, end_date,
+                                                                           force_insert,
+                                                                           bbox_w, bbox_e, bbox_n, bbox_s,
+                                                                           tag,
+                                                                           numb_of_tweets_per_hour_allowed_for_user,
+                                                                           clean_text,
+                                                                           db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
 
         if move_imported_to_folder:
             shutil.move(path_in_str, os.path.join(
@@ -129,14 +133,14 @@ def twitter_import_jsonl_folder_to_postgres(folder_path: str,
 
 
 def twitter_import_jsonl_file_to_postgres(file_path: str,
-                                    continue_on_error=True,
-                                    start_date: datetime = None, end_date: datetime = None,
-                                    force_insert=True,
-                                    bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
-                                    tag='',
-                                    numb_of_tweets_per_hour_allowed_for_user=.5,
-                                    clean_text=False,
-                                    db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
+                                          continue_on_error=True,
+                                          start_date: datetime = None, end_date: datetime = None,
+                                          force_insert=True,
+                                          bbox_w=0, bbox_e=0, bbox_n=0, bbox_s=0,
+                                          tag='',
+                                          numb_of_tweets_per_hour_allowed_for_user=.5,
+                                          clean_text=False,
+                                          db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema=''):
 
     postgres = _get_postgres(
         db_username=db_username, db_password=db_password, db_hostname=db_hostname, db_port=db_port, db_database=db_database, db_schema=db_schema)
@@ -171,7 +175,7 @@ def twitter_import_jsonl_file_to_postgres(file_path: str,
 
 
 def _worker_jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, clean_text, continue_on_error,
-                                    pbar, postgres):
+                                   pbar, postgres):
 
     chunks = 100
     number_of_tweets_inserted = 0
@@ -196,7 +200,7 @@ def _worker_jsonl_file_to_postgres(f, file_path, tag, num_lines, force_insert, c
             with suppress_stdout():
                 try:
                     num = postgres.bulk_insert_tweets(tweet_lines_to_insert, force_insert=force_insert, clean_text=clean_text,
-                                                                tag=tag)
+                                                      tag=tag)
                 except:
                     if continue_on_error:
                         print('Error in inserting tweets')
