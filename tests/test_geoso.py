@@ -25,6 +25,27 @@ class Test_Geoso(unittest.TestCase):
         """Test the version of the package"""
         assert geoso.__version__ == '0.0.1'
 
+    def test_command_line_interface(self):
+        runner = CliRunner()
+        commands = [
+            ['--help'],
+            ['--verbose', 'test-cli'],
+            ['--verbose', 'test-cli', '--message', 'test message'],
+            # ['--verbose', 'twitter-get-tweets-information-in-database', '--start_date', '2019-01-01', '--end_date', '2019-12-30', '--min_x', '-180',
+            #  '--min_y', '-90', '--max_x', '180', '--max_y', '90', '--db_username', self.DB_USERNAME, '--db_password', self.DB_PASSWORD, '--db_hostname',
+            #  self.DB_HOSTNAME,
+            #  '--db_port', self.DB_PORT, '--db_database', self.DB_DATABASE, '--db_schema', self.DB_SCHEMA]
+        ]
+        for command in commands:
+            result = runner.invoke(cli.main, command)
+            assert result.exit_code == 0
+            print(result.stdout)
+        
+        
+        # assert '--help' in result.output
+        # assert 'Executing ...' in result.output
+        # assert 'Execution finished successfully.' in result.output
+
     # def test_command_line_interface(self):
     #     """Test the CLI."""
 
@@ -40,14 +61,6 @@ class Test_Geoso(unittest.TestCase):
     #         db_username=self.DB_USERNAME)
 
     #     assert num_inserted > 0
-
-    #     runner = CliRunner()
-
-    #     result = runner.invoke(cli.main, ['test_cli', '--verbose'])
-    #     print(result.stdout)
-    #     assert result.exit_code == 0
-    #     assert 'test_cli' in result.output
-    #     assert 'Execution finished successfully.' in result.output
 
     #     result = runner.invoke(cli.main, ['--verbose',
     #                                       'twitter_get_tweets_information_in_database',

@@ -5,14 +5,15 @@ from logging import warning
 import click
 from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv, twitter_get_tweets_information_in_database
 
-#TODO: Testing the CLI
+# TODO: Testing the CLI
+
 
 @click.group()
 @click.pass_context
 @click.option('--verbose', is_flag=True, help='If provided then the detail description of the process will be printed in the command line.')
 def main(ctx, verbose):
-    '''Console script for geoso 
-    '''
+    """Console script for geoso 
+    """
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
@@ -22,10 +23,15 @@ def main(ctx, verbose):
 
 
 @main.command()
+@click.option("--message", help="The message to be printed.")
 @click.pass_context
-def test_cli(ctx):
-    if ctx.obj['verbose']:
-        click.echo('Executing test_cli')
+def test_cli(ctx, message):
+    """Testing the cli
+    """
+    if ctx.obj['verbose']:        
+        click.echo('Executing ...')
+        if message is not None:
+            click.echo(message)
         click.echo('Execution finished successfully.')
 
 
@@ -42,11 +48,15 @@ def test_cli(ctx):
 @click.option('--db_schema', default='public', help='Postgres database schema. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 def import_jsonl_folder_to_postgres(ctx, folder_path, move_imported_to_folder, continue_on_error,
                                     db_username, db_password, db_hostname, db_port, db_database, db_schema):
+    """Import a folder *.jsonl files to PostgreSQL 
+    """
     if ctx.obj['verbose']:
-        click.echo('Executing import_jsonl_folder_to_postgres')
+        click.echo('Executing ...')
     twitter_import_jsonl_folder_to_postgres(folder_path, move_imported_to_folder=move_imported_to_folder, continue_on_error=continue_on_error, db_username=db_username, db_password=db_password, db_hostname=db_hostname,
                                             db_port=db_port, db_database=db_database, db_schema=db_schema,
                                             verbose=ctx.obj['verbose'])
+    if ctx.obj['verbose']:
+        click.echo('Execution finished successfully.')
 
 
 @main.command()
@@ -70,11 +80,15 @@ def import_jsonl_folder_to_postgres(ctx, folder_path, move_imported_to_folder, c
 @click.option('--db_schema', default='public', help='Postgres database schema. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 def export_postgres_to_csv(ctx, file_path, start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language, overwrite_file,
                            db_username, db_password, db_hostname, db_port, db_database, db_schema):
+    """Export tweets data from PostgreSQL database to a csv file
+    """
     if ctx.obj['verbose']:
-        click.echo('Executing export_postgres_to_csv')
+        click.echo('Executing ...')
     twitter_export_postgres_to_csv(file_path, start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language, overwrite_file,
                                    db_username, db_password, db_hostname, db_port, db_database, db_schema,
                                    ctx.obj['verbose'])
+    if ctx.obj['verbose']:
+        click.echo('Execution finished successfully.')
 
 
 @main.command()
@@ -94,14 +108,17 @@ def export_postgres_to_csv(ctx, file_path, start_date, end_date, min_x, min_y, m
 @click.option('--db_database', default='', help='Postgres database name. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 @click.option('--db_schema', default='public', help='Postgres database schema. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 def twitter_get_tweets_information_in_database(ctx, start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language,
-                           db_username, db_password, db_hostname, db_port, db_database, db_schema):
+                                               db_username, db_password, db_hostname, db_port, db_database, db_schema):
+    """Get information about tweets in the PostgreSQL database
+    """
     if ctx.obj['verbose']:
-        click.echo('Executing twitter_get_tweets_information_in_database')
+        click.echo('Executing ...')
     twitter_get_tweets_information_in_database(start_date, end_date, min_x, min_y, max_x, max_y, table_name, tag, language,
                                                db_username, db_password, db_hostname, db_port, db_database, db_schema,
                                                ctx.obj['verbose'])
     if ctx.obj['verbose']:
         click.echo('Execution finished successfully.')
+
 
 @main.command()
 @click.pass_context
@@ -125,10 +142,14 @@ def twitter_get_tweets_information_in_database(ctx, start_date, end_date, min_x,
 @click.option('--db_schema', default='public', help='Postgres database schema. Required if save_date_mode is set to DB. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 def retrieve_data_streaming_api(ctx, consumer_key, consumer_secret, access_token, access_secret, save_data_mode, tweets_output_folder, area_name, min_x, min_y, max_x, max_y, language,
                                 db_username, db_password, db_hostname, db_port, db_database, db_schema):
+    """Retrieve data from Twitter Streaming API
+    """
     if ctx.obj['verbose']:
-        click.echo('Executing retrieve_data_streaming_api')
+        click.echo('Executing ...')
     retrieve_data_streaming_api(consumer_key, consumer_secret, access_token, access_secret, str(save_data_mode).upper(),
                                 tweets_output_folder, area_name, min_x, max_x, min_y, max_y, language, db_hostname, db_port, db_database, db_schema, db_username, db_password)
+    if ctx.obj['verbose']:
+        click.echo('Execution finished successfully.')
 
 
 if __name__ == '__main__':
