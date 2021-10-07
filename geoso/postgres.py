@@ -31,7 +31,6 @@ class PostgresHandler:
 
     def __init__(self, DB_HOSTNAME, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD, DB_SCHEMA):
 
-        # TODO: read the variables one by one.
         if DB_HOSTNAME == '' or DB_PORT == '' or DB_DATABASE == '' or DB_USERNAME == '' or DB_HOSTNAME is None or DB_PORT is None or DB_DATABASE is None or DB_USERNAME is None:
             DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA = EnvVar.get_db_env_variables_if_none(
                 DB_HOSTNAME, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_DATABASE, DB_SCHEMA)
@@ -256,13 +255,13 @@ class PostgresHandler_Tweets(PostgresHandler):
         self.engine.execute(sql)
         pass
 
-    def read_data_from_postgres(self, start_date: datetime, end_date: datetime, min_x, min_y, max_x, max_y, table_name='tweet', tag='', lang=None, columns: list = ['id', 'x', 'y', 't'], verbose=False):
+    def read_data_from_postgres(self, start_date: datetime, end_date: datetime, x_min, y_min, x_max, y_max, table_name='tweet', tag='', lang=None, columns: list = ['id', 'x', 'y', 't'], verbose=False):
         # todo: check if the table exists and catch any error
         if verbose:
             print('\tStart reading data ...')
         s_time = datetime.now()
 
-        if min_x is None or min_y is None or max_x is None or max_y is None or start_date is None or end_date is None:
+        if x_min is None or y_min is None or x_max is None or y_max is None or start_date is None or end_date is None:
             raise ValueError(
                 "Either date arguments (start_date and end_date) or bounding box arguments (x_min, y_min, x_max, and y_max) are not provided properly.")
 
@@ -278,7 +277,7 @@ class PostgresHandler_Tweets(PostgresHandler):
         self.check_db()
 
         tweets = pd.read_sql_query(
-            sql, self.engine, params=(start, end, min_x, max_x, min_y, max_y))
+            sql, self.engine, params=(start, end, x_min, x_max, y_min, y_max))
 
         if 't' in columns:
             tweets['t_datetime'] = tweets['t'].apply(
@@ -693,7 +692,7 @@ class PostgresHandler_Tweets(PostgresHandler):
                                             x_min: float = None, y_min: float = None, x_max: float = None, y_max: float = None,
                                             tag=None, lang=None) -> pd.DataFrame:
 
-        col = ' COUNT(*) AS num_tweets, MIN(t_datetime) AS min_date, MAX(t_datetime) AS max_date, MIN(x) AS min_x, MIN(y) as min_y, MAX(y) as max_y '
+        col = ' COUNT(*) AS num_tweets, MIN(t_datetime) AS min_date, MAX(t_datetime) AS max_date, MIN(x) AS x_min, MIN(y) as y_min, MAX(x) AS x_max, MAX(y) as y_max '
 
         flag_bbox = x_min is not None and y_min is not None and x_max is not None and y_min is not None
         flag_time = start_date is not None and end_date is not None
@@ -714,7 +713,7 @@ class PostgresHandler_Tweets(PostgresHandler):
                 self.engine, params=(x_min, x_max, y_min, y_max))
         else:
             return pd.read_sql_query(F'SELECT {col} FROM {self.db_schema}.tweet;',
-                self.engine)
+                                     self.engine)
 
         return results
 

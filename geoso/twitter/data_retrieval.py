@@ -15,8 +15,8 @@ from urllib3.exceptions import ProtocolError
 
 
 def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None, access_token=None, access_secret=None, save_data_mode=None,
-                                        tweets_output_folder=None, area_name='',  min_x=None, max_x=None, min_y=None, max_y=None,
-                                        languages=None, max_num_tweets=None, only_geotagged=True, db_hostname=None, db_port=None, db_database=None, db_schema='Public', db_username=None, db_password=None, verbose=True):
+                                        tweets_output_folder=None, area_name='',  x_min: float=None, x_max: float=None, y_min: float=None, y_max: float=None,
+                                        languages=None, max_num_tweets: int=None, only_geotagged=True, db_hostname=None, db_port=None, db_database=None, db_schema='Public', db_username=None, db_password=None, verbose=True):
 
     dprint('Start: twitter_retrieve_data_streaming_api process', verbose=verbose,
            text_category=Text_Categories.Process_start)
@@ -47,18 +47,18 @@ def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None,
     api = tweepy.API(auth)
     dprint('Authentication was successful.', verbose=verbose)
 
-    if min_x is None or min_y is None or max_x is None or max_y is None:
-        min_x = float(os.getenv('MIN_X')) if os.getenv(
-            'MIN_X') is not None else None
-        max_x = float(os.getenv('MAX_X')) if os.getenv(
-            'MAX_X') is not None else None
-        min_y = float(os.getenv('MIN_Y')) if os.getenv(
-            'MIN_Y') is not None else None
-        max_y = float(os.getenv('MAX_Y')) if os.getenv(
-            'MAX_Y') is not None else None
+    if x_min is None or y_min is None or x_max is None or y_max is None:
+        x_min = float(os.getenv('x_min')) if os.getenv(
+            'x_min') is not None else None
+        x_max = float(os.getenv('x_max')) if os.getenv(
+            'x_max') is not None else None
+        y_min = float(os.getenv('y_min')) if os.getenv(
+            'y_min') is not None else None
+        y_max = float(os.getenv('y_max')) if os.getenv(
+            'y_max') is not None else None
 
     dprint(
-        f"BBOX ({area_name}): {min_x}, {min_y}, {max_x}, {max_y}", verbose=verbose)
+        f"BBOX ({area_name}): {x_min}, {y_min}, {x_max}, {y_max}", verbose=verbose)
 
     if tweets_output_folder is None:
         tweets_output_folder = os.getenv('TWEETS_OUTPUT_FOLDER')
@@ -87,7 +87,7 @@ def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None,
 
     if save_data_mode == 'FILE':
         _listen_to_tweets(area_name, tweets_output_folder, None,
-                          save_data_mode, auth, languages, max_num_tweets, only_geotagged, min_x, min_y, max_x, max_y, verbose=verbose)
+                          save_data_mode, auth, languages, max_num_tweets, only_geotagged, x_min, y_min, x_max, y_max, verbose=verbose)
 
         dprint('End: twitter_retrieve_data_streaming_api process', verbose=verbose,
                text_category=Text_Categories.Process_end)
@@ -124,10 +124,10 @@ def twitter_retrieve_data_streaming_api(consumer_key=None, consumer_secret=None,
             sys.exit(2)
 
         _listen_to_tweets(area_name, None, postgres_tweets,
-                          save_data_mode, auth, languages, max_num_tweets, only_geotagged, min_x, min_y, max_x, max_y, verbose)
+                          save_data_mode, auth, languages, max_num_tweets, only_geotagged, x_min, y_min, x_max, y_max, verbose)
 
 
-def _listen_to_tweets(area_name, output_folder, postgres, save_data_mode, auth, languages: list, max_num_tweets, only_geotagged, min_x, min_y, max_x, max_y, verbose=False):
+def _listen_to_tweets(area_name, output_folder, postgres, save_data_mode, auth, languages: list, max_num_tweets, only_geotagged, x_min, y_min, x_max, y_max, verbose=False):
 
     dprint('Initializing the listener ...', verbose=verbose)
 
@@ -141,9 +141,9 @@ def _listen_to_tweets(area_name, output_folder, postgres, save_data_mode, auth, 
         try:
             if len(languages) > 0:
                 _stream.filter(languages=languages, locations=[
-                    min_x, min_y, max_x, max_y])
+                    x_min, y_min, x_max, y_max])
             else:
-                _stream.filter(locations=[min_x, min_y, max_x, max_y])
+                _stream.filter(locations=[x_min, y_min, x_max, y_max])
             stop_flag = listener.enough_collected()
         except (ProtocolError, AttributeError):
             continue

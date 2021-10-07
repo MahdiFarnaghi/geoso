@@ -10,7 +10,7 @@ from geoso import utils
 import shutil
 
 from geoso.utils import EnvVar, Folders
-from geoso import twitter_import_jsonl_folder_to_postgres, twitter_import_jsonl_folder_to_postgres, twitter_export_postgres_to_csv, twitter_retrieve_data_streaming_api, twitter_import_jsonl_file_to_postgres, twitter_get_tweets_information_in_database
+from geoso import twitter_import_jsonl_folder_to_db, twitter_import_jsonl_folder_to_db, twitter_export_db_to_csv, twitter_retrieve_data_streaming_api, twitter_import_jsonl_file_to_db, twitter_get_tweets_info_from_db
 from test_helper import drop_create_database, drop_database, test_data_jsonl_folder_path, test_data_jsonl_file_path
 
 
@@ -26,9 +26,9 @@ class Test_Twitter(unittest.TestCase):
         drop_database(self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME,
                       self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA)
 
-    def test_jsonl_folder_to_postgres(self):
+    def test_jsonl_folder_to_db(self):
 
-        num_inserted = twitter_import_jsonl_folder_to_postgres(
+        num_inserted = twitter_import_jsonl_folder_to_db(
             test_data_jsonl_folder_path,
             continue_on_error=True,
             db_database=self.DB_DATABASE,
@@ -40,8 +40,8 @@ class Test_Twitter(unittest.TestCase):
 
         assert num_inserted > 0
 
-    def test_get_tweets_information_in_database(self):
-        num_inserted = twitter_import_jsonl_file_to_postgres(
+    def test_get_tweets_info_from_db(self):
+        num_inserted = twitter_import_jsonl_file_to_db(
             test_data_jsonl_file_path,
             continue_on_error=True,
             db_database=self.DB_DATABASE,
@@ -60,7 +60,7 @@ class Test_Twitter(unittest.TestCase):
         y_min = -90
         y_max = 90
 
-        df = twitter_get_tweets_information_in_database(
+        df = twitter_get_tweets_info_from_db(
             start_date=start_date,
             end_date=end_date,
             x_min=x_min,
@@ -76,7 +76,7 @@ class Test_Twitter(unittest.TestCase):
 
         assert df.iloc[0, 0] > 0
 
-        df = twitter_get_tweets_information_in_database(
+        df = twitter_get_tweets_info_from_db(
             start_date=start_date,
             end_date=end_date,
             db_database=self.DB_DATABASE,
@@ -88,7 +88,7 @@ class Test_Twitter(unittest.TestCase):
 
         assert df.iloc[0, 0] > 0
 
-        df = twitter_get_tweets_information_in_database(
+        df = twitter_get_tweets_info_from_db(
             x_min=x_min,
             x_max=x_max,
             y_min=x_min,
@@ -102,7 +102,7 @@ class Test_Twitter(unittest.TestCase):
 
         assert df.iloc[0, 0] > 0
 
-        df = twitter_get_tweets_information_in_database(            
+        df = twitter_get_tweets_info_from_db(            
             db_database=self.DB_DATABASE,
             db_hostname=self.DB_HOSTNAME,
             db_password=self.DB_PASSWORD,
@@ -112,9 +112,9 @@ class Test_Twitter(unittest.TestCase):
 
         assert df.iloc[0, 0] > 0
 
-    def test_export_postgres_to_csv(self):
+    def test_export_db_to_csv(self):
 
-        num_inserted = twitter_import_jsonl_folder_to_postgres(
+        num_inserted = twitter_import_jsonl_folder_to_db(
             test_data_jsonl_folder_path,
             continue_on_error=True,
             db_database=self.DB_DATABASE,
@@ -128,13 +128,13 @@ class Test_Twitter(unittest.TestCase):
             assert False
         else:
             file_path = os.path.join(Folders.get_temp_folder(), 'test.csv')
-            twitter_export_postgres_to_csv(file_path=file_path,
+            twitter_export_db_to_csv(file_path=file_path,
                                            start_date='2019-01-01',
                                            end_date='2019-12-30',
-                                           min_x=-180,
-                                           min_y=-90,
-                                           max_x=180,
-                                           max_y=90,
+                                           x_min=-180,
+                                           y_min=-90,
+                                           x_max=180,
+                                           y_max=90,
                                            db_database=self.DB_DATABASE,
                                            db_hostname=self.DB_HOSTNAME,
                                            db_password=self.DB_PASSWORD,
@@ -166,17 +166,17 @@ class Test_Twitter(unittest.TestCase):
         save_data_mode = 'FILE'
         tweets_output_folder = Folders.get_temp_folder()
         area_name = 'London'
-        min_x = -1
-        max_x = 1
-        min_y = 51
-        max_y = 52
+        x_min = -1
+        x_max = 1
+        y_min = 51
+        y_max = 52
         languages = 'en'
         max_num_tweets = 5
         only_geotagged = False
         verbose = True
 
         twitter_retrieve_data_streaming_api(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_secret=access_secret, save_data_mode=save_data_mode,
-                                            tweets_output_folder=tweets_output_folder, area_name=area_name,  min_x=min_x, max_x=max_x, min_y=min_y, max_y=max_y,
+                                            tweets_output_folder=tweets_output_folder, area_name=area_name,  x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
                                             languages=languages, max_num_tweets=max_num_tweets, only_geotagged=only_geotagged, verbose=verbose)
 
         num_tweets_in_file = 0
@@ -204,16 +204,16 @@ class Test_Twitter(unittest.TestCase):
         save_data_mode = 'DB'
         tweets_output_folder = ''
         area_name = 'London'
-        min_x = -1
-        max_x = 1
-        min_y = 51
-        max_y = 52
+        x_min = -1
+        x_max = 1
+        y_min = 51
+        y_max = 52
         languages = 'en'
         max_num_tweets = 10
         only_geotagged = False
         verbose = True
         twitter_retrieve_data_streaming_api(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_secret=access_secret, save_data_mode=save_data_mode,
-                                            tweets_output_folder=tweets_output_folder, area_name=area_name,  min_x=min_x, max_x=max_x, min_y=min_y, max_y=max_y,
+                                            tweets_output_folder=tweets_output_folder, area_name=area_name,  x_min=x_min, x_max=x_max, y_min=y_min, y_max=y_max,
                                             languages=languages, max_num_tweets=max_num_tweets, only_geotagged=only_geotagged,
                                             db_database=self.DB_DATABASE,
                                             db_hostname=self.DB_HOSTNAME,
