@@ -1,5 +1,5 @@
-from ..postgres import PostgresHandler_Tweets
-from ..utils import Folders, Text_Categories, dprint, EnvVar
+from .postgres import PostgresHandler_Tweets
+from .utils import Folders, Text_Categories, dprint, EnvVar
 import tweepy
 from tweepy import OAuthHandler
 from tweepy import Stream

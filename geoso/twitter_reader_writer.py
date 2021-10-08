@@ -7,8 +7,8 @@ from pathlib import Path
 
 from datetime import datetime
 
-from ..utils import suppress_stdout, Folders
-from ..postgres import PostgresHandler_Tweets
+from .utils import suppress_stdout, Folders
+from .postgres import PostgresHandler_Tweets
 import abc
 import gzip
 import pathlib
