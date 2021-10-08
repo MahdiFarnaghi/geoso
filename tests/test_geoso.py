@@ -66,6 +66,7 @@ class Test_Geoso(unittest.TestCase):
               '--consumer_key', self.consumer_key, '--consumer_secret', self.consumer_secret,
               '--access_token', self.access_token, '--access_secret', self.access_secret], ['Execution finished successfully.']],
         ]
+        
         for command_message in commands:
             command = command_message[0]
             message = command_message[1][0]

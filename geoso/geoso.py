@@ -1,5 +1,5 @@
 """Main module."""
 
+#TODO: Edit the repository details and add new topics
 
-def test_sum(a, b):
-    return a + b
+
