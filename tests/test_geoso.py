@@ -25,7 +25,7 @@ class Test_Geoso(unittest.TestCase):
 
     def test_version(self):
         """Test the version of the package"""
-        assert geoso.__version__ == '0.0.1'
+        assert geoso.__version__
 
     def test_command_line_interface(self):
 
@@ -66,7 +66,7 @@ class Test_Geoso(unittest.TestCase):
               '--consumer_key', self.consumer_key, '--consumer_secret', self.consumer_secret,
               '--access_token', self.access_token, '--access_secret', self.access_secret], ['Execution finished successfully.']],
         ]
-        
+
         for command_message in commands:
             command = command_message[0]
             message = command_message[1][0]
