@@ -58,6 +58,6 @@ setup(
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/MahdiFarnaghi/geoso',
-    version='0.0.1',
+    version='0.0.2',
     zip_safe=False,
 )
