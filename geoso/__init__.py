@@ -2,7 +2,7 @@
 
 __author__ = """Mahdi Farnaghi"""
 __email__ = 'mahdi.farnaghi@outlook.com'
-__version__ = '0.0.3'
+__version__ = '0.0.4'
 
 from geoso.twitter.reader_writer import (
     twitter_export_db_to_csv,
