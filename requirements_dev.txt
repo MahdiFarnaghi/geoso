@@ -19,8 +19,9 @@ tweepy==3.9.0
 geoalchemy2==0.8.4
 sqlalchemy==1.4.23
 sqlalchemy_utils==0.37.8
+psycopg2-binary
 pycountry==20.7.3
-nltk==3.5
+nltk>=3.6.4
 spacy
 pymorphy2==0.8
 pymorphy2-dicts
