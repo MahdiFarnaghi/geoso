@@ -24,12 +24,14 @@ def main(ctx, verbose):
 @click.option("--name", help="Your name :).")
 @click.pass_context
 def greeting(ctx, name):
-    """Testing the cli
+    """Test geoso Command Line Interface
     """
     if ctx.obj['verbose']:
         click.echo('Executing ...')
         if name is not None:
             click.echo(f'Hello {name}. Thanks for using geoso.')
+        click.echo(f"The geoso library is working properly. :)")
+        click.echo(f'version: {geoso.__version__}')
         click.echo('Execution finished successfully.')
 
 
