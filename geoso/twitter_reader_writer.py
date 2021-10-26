@@ -79,6 +79,9 @@ def twitter_export_db_to_csv(file_path: str, start_date: datetime, end_date: dat
         if verbose:
             print('\tStart writting data to the file ...')
         s_time = datetime.now()
+        if 'text' in df.columns:
+            df['text'] = df['text'].str.replace('\n', ' ')
+            df['text'] = df['text'].str.replace(',', ' ')
         df.to_csv(file_path)
 
         dur = datetime.now() - s_time
