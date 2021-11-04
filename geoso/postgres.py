@@ -256,7 +256,9 @@ class PostgresHandler_Tweets(PostgresHandler):
         pass
 
     def read_data_from_postgres(self, start_date: datetime, end_date: datetime, x_min, y_min, x_max, y_max, table_name='tweet', tag='', lang=None,
-                                columns: list = ['id', 'x', 'y', 't', 'text'], verbose=False):
+                                columns: list = [
+                                    'id', 'x', 'y', 't', 'text', 'lang', 'user_id', 'user_screen_name', 'hashtags_'],
+                                verbose=False):
         # todo: check if the table exists and catch any error
         if verbose:
             print('\tStart reading data ...')
