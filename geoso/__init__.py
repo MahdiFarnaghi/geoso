@@ -14,3 +14,8 @@ from .twitter_reader_writer import (
 from .twitter_data_retrieval import (
     twitter_retrieve_data_streaming_api
 )
+
+from .clean_text import (
+    twitter_clean_text,
+    twitter_clean_text_in_dataframe
+)

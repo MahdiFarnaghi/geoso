@@ -1,3 +1,4 @@
+from geoso.clean_text import twitter_clean_text_in_dataframe
 from geoso.postgres import PostgresHandler_Tweets
 import unittest
 import os
@@ -8,9 +9,10 @@ import sqlalchemy_utils
 from sqlalchemy_utils.functions.database import drop_database
 from geoso import utils
 import shutil
+import pandas as pd
 
 from geoso.utils import EnvVar, Folders
-from geoso import twitter_import_jsonl_folder_to_db, twitter_import_jsonl_folder_to_db, twitter_export_db_to_csv, twitter_retrieve_data_streaming_api, twitter_import_jsonl_file_to_db, twitter_get_tweets_info_from_db
+from geoso import twitter_clean_text, twitter_import_jsonl_folder_to_db, twitter_import_jsonl_folder_to_db, twitter_export_db_to_csv, twitter_retrieve_data_streaming_api, twitter_import_jsonl_file_to_db, twitter_get_tweets_info_from_db
 from test_helper import drop_create_database, drop_database, test_data_jsonl_folder_path, test_data_jsonl_file_path
 
 
@@ -25,6 +27,32 @@ class Test_Twitter(unittest.TestCase):
     def tearDown(self):
         drop_database(self.DB_HOSTNAME, self.DB_PORT, self.DB_USERNAME,
                       self.DB_PASSWORD, self.DB_DATABASE, self.DB_SCHEMA)
+
+
+    def test_clean_text(self):
+
+        texts = [
+            ("I'm at @HolidayInn Brighton - Seafront in BRIGHTON, Brighton and Hove https:\/\/t.co\/IkuY3l7HEf",
+             'en', "i m at inn brighton seafront in brighton and hove"),
+            ("A esta hora iniciamos con la toma empresarial en el municipio del El Espinal, donde invitamos a todos a participar\u2026 https:\/\/t.co\/5zXDuRryjy",
+             'es', "a esta hora iniciamos con la toma empresarial en el municipio del espinal donde invitamos a todos a participar"),
+            ("Interested in a job in #SandySprings, GA? This could be a great fit. Click the link in our bio to apply: CNA-PRN Re\u2026 https:\/\/t.co\/QIkGEJpkvu",
+             'en', "interested in a job in sandy springs ga this could be a great fit click the link in our bio to apply cna prn re"),
+            ("On a little gravel trail along the Hudson River.\n\n#bikepacking #ridemoreexplore #OutsideIsFree #everyrideisepic\u2026 https:\/\/t.co\/AcEd1NAYkg",
+             'en', 'on a little gravel trail along the hudson river bikepacking ridemoreexplore outside is free everyrideisepic'),
+            ("Ais pun dah cair duduk dengan awak apatah lagi saya \ud83d\ude18\n\n#samsamlukupalamau @ Tasek Gelugor, Pulau Pinang, Malaysia https:\/\/t.co\/ZYPCmEQbWb", 'in', '')
+        ]
+
+        for r in texts:
+            text_cleaned = twitter_clean_text(r[0], r[1])
+            assert text_cleaned == r[2]
+
+        df = pd.DataFrame(texts, columns=['text', 'lang', 'expected_text'])
+
+        df['text_clean'] = twitter_clean_text_in_dataframe(df, text_column='text', lang_code_column='lang')
+        assert df.text_clean[0] == texts[0][2]
+        assert df.text_clean[4] == texts[4][2]
+
 
     def test_jsonl_folder_to_db(self):
 
@@ -157,4 +185,3 @@ class Test_Twitter(unittest.TestCase):
                 pass
 
             assert success
-
