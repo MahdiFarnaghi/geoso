@@ -77,13 +77,13 @@ class TextCleaner:
 
     @ staticmethod
     def normalize_text(text: str):
+        text = TextCleaner._remove_usernames(text)
         text = text.replace('-', ' ')
         # normalization 1: xxxThis is a --> xxx. This is a (missing delimiter)
         text = re.sub(r'([a-z])([A-Z])', r'\1\. \2', text)  # before lower case
         # normalization 2: lower case
         text = text.lower()
-        text = TextCleaner._remove_url(text)
-        text = TextCleaner._remove_usernames(text)
+        text = TextCleaner._remove_url(text)        
         text = TextCleaner._remove_punct(text)
         text = TextCleaner._replace_hashtag_by_text(text)
         text = TextCleaner._remove_white_space(text)
@@ -216,7 +216,7 @@ def twitter_clean_text(text, lang_code: str = '', lang_full_name: str = '',
                 f"The language is not supported (lang_code: {lang_code}, lang_full_name: {lang_full_name}).")
 
     # https://towardsdatascience.com/another-twitter-sentiment-analysis-bb5b01ebad90
-    text = text.replace('\/', '/')
+    text = text.replace('\\/', '/')
     text = TextCleaner._tokenize_lemmatize(
         text=text, lang=lang_code,
         lemmatize=lemmatize,

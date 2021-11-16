@@ -32,19 +32,28 @@ class Test_Twitter(unittest.TestCase):
     def test_clean_text(self):
 
         texts = [
+            ("@wahlborn @YouTube @TobiasDirking @SimoNiedermeyer Aber ohne Auto  brauche sowas nicht  bin ja ein DENKENDER Mensch ðŸ˜Ž", 
+            'de', 
+            'aber ohne auto brauche sowas nicht bin ja ein denkender mensch ðÿ˜ž'),
             ("I'm at @HolidayInn Brighton - Seafront in BRIGHTON, Brighton and Hove https:\/\/t.co\/IkuY3l7HEf",
-             'en', "i m at inn brighton seafront in brighton and hove"),
+             'en', 
+             "i m at brighton seafront in brighton and hove"),
             ("A esta hora iniciamos con la toma empresarial en el municipio del El Espinal, donde invitamos a todos a participar\u2026 https:\/\/t.co\/5zXDuRryjy",
-             'es', "a esta hora iniciamos con la toma empresarial en el municipio del espinal donde invitamos a todos a participar"),
+            'es', 
+            "a esta hora iniciamos con la toma empresarial en el municipio del espinal donde invitamos a todos a participar"),
             ("Interested in a job in #SandySprings, GA? This could be a great fit. Click the link in our bio to apply: CNA-PRN Re\u2026 https:\/\/t.co\/QIkGEJpkvu",
-             'en', "interested in a job in sandy springs ga this could be a great fit click the link in our bio to apply cna prn re"),
+            'en', 
+            "interested in a job in sandy springs ga this could be a great fit click the link in our bio to apply cna prn re"),
             ("On a little gravel trail along the Hudson River.\n\n#bikepacking #ridemoreexplore #OutsideIsFree #everyrideisepic\u2026 https:\/\/t.co\/AcEd1NAYkg",
-             'en', 'on a little gravel trail along the hudson river bikepacking ridemoreexplore outside is free everyrideisepic'),
-            ("Ais pun dah cair duduk dengan awak apatah lagi saya \ud83d\ude18\n\n#samsamlukupalamau @ Tasek Gelugor, Pulau Pinang, Malaysia https:\/\/t.co\/ZYPCmEQbWb", 'in', '')
+            'en', 
+            'on a little gravel trail along the hudson river bikepacking ridemoreexplore outside is free everyrideisepic'),
+            ("Ais pun dah cair duduk dengan awak apatah lagi saya \ud83d\ude18\n\n#samsamlukupalamau @ Tasek Gelugor, Pulau Pinang, Malaysia https:\/\/t.co\/ZYPCmEQbWb", 
+            'in', 
+            '')
         ]
 
         for r in texts:
-            text_cleaned = twitter_clean_text(r[0], r[1])
+            text_cleaned = twitter_clean_text(r[0], r[1])            
             assert text_cleaned == r[2]
 
         df = pd.DataFrame(texts, columns=['text', 'lang', 'expected_text'])
