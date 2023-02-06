@@ -25,7 +25,7 @@ class Test_Geoso(unittest.TestCase):
 
     def test_version(self):
         """Test the version of the package"""
-        assert geoso.__version__
+        assert geoso.__version__ 
 
     def test_command_line_interface(self):
 
