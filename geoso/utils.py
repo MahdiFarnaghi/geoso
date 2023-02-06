@@ -119,8 +119,7 @@ class Folders:
     @staticmethod
     def make_parent_dir_with_check(file_path: Path):
         if not Path(file_path).parent.exists():
-            Folders.check_make_dir(file_path.parent)
-    
+            Folders.check_make_dir(file_path.parent)  
     
 
 def print_error():

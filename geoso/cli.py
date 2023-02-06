@@ -92,7 +92,8 @@ def twitter_import_jsonl_file_to_db(ctx, file_path, continue_on_error,
 @click.option('--x_max', default=None, help='Maximum X (longitude) of the area for which the tweets will be retrieved.', required=True)
 @click.option('--y_max', default=None, help='Maximum Y (latitude) of the area for which the tweets will be retrieved.', required=True)
 @click.option('--tag', default=None, help='The tag of the record in the database.')
-@click.option('--language', default=None, help='language code of the tweets to be retrieved.')
+@click.option('--language', default=None, help='Language code of the tweets to be retrieved.')
+@click.option('--columns', default='id, x, y, t, text, lang, user_id, user_screen_name, hashtags_', help='The comma separated list of columns to be retrieved from the tweets table. If not provided geoso returns id, x, y, t, text, lang, user_id, user_screen_name, hashtags_')
 @click.option('--overwrite_file', is_flag=True, help='Overwrite the file if it exists.')
 @click.option('--db_username', default='', help='Postgres database username. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 @click.option('--db_password', default='', help='Postgres database password. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
@@ -100,13 +101,13 @@ def twitter_import_jsonl_file_to_db(ctx, file_path, continue_on_error,
 @click.option('--db_port', default='', help='Postgres database port. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 @click.option('--db_database', default='', help='Postgres database name. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
 @click.option('--db_schema', default='public', help='Postgres database schema. This variable is required. If it is not provided geoso tries to load it from an environmental variable with the same name, but capitalized.')
-def twitter_export_db_to_csv(ctx, file_path, start_date, end_date, x_min, y_min, x_max, y_max, tag, language, overwrite_file,
+def twitter_export_db_to_csv(ctx, file_path, start_date, end_date, x_min, y_min, x_max, y_max, tag, language, columns, overwrite_file,
                              db_username, db_password, db_hostname, db_port, db_database, db_schema):
     """Export tweets from the database to a csv file
     """
     if ctx.obj['verbose']:
         click.echo('Executing ...')
-    geoso.twitter_export_db_to_csv(file_path, start_date, end_date, x_min, y_min, x_max, y_max, tag, language, overwrite_file,
+    geoso.twitter_export_db_to_csv(file_path, start_date, end_date, x_min, y_min, x_max, y_max, tag, language, columns, overwrite_file,
                                    db_username, db_password, db_hostname, db_port, db_database, db_schema,
                                    verbose=ctx.obj['verbose'])
     if ctx.obj['verbose']:

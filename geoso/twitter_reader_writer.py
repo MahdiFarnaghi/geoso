@@ -38,7 +38,7 @@ def twitter_get_tweets_info_from_db(start_date: datetime = None, end_date: datet
     return postgres.tweets_information_by_bbox_and_time(start_date=_start_date, end_date=_end_date, x_min=x_min, y_min=y_min, x_max=x_max, y_max=x_max, tag=tag, lang=language)
 
 
-def twitter_export_db_to_csv(file_path: str, start_date: datetime, end_date: datetime, x_min, y_min, x_max, y_max, tag='', lang=None, overwrite_file=True,
+def twitter_export_db_to_csv(file_path: str, start_date: datetime, end_date: datetime, x_min, y_min, x_max, y_max, tag='', lang=None, columns='id, x, y, t, text, lang, user_id, user_screen_name, hashtags_', overwrite_file=True,
                              db_username='', db_password='', db_hostname='', db_port='', db_database='', db_schema='',
                              verbose=False):
 
@@ -73,7 +73,7 @@ def twitter_export_db_to_csv(file_path: str, start_date: datetime, end_date: dat
 
     # TODO: The columns arg is neglected. Add it.
     df, num = postgres.read_data_from_postgres(
-        start_date=_start_date, end_date=_end_date, x_min=x_min, y_min=y_min, x_max=x_max, y_max=y_max, tag=tag, lang=lang, verbose=verbose)
+        start_date=_start_date, end_date=_end_date, x_min=x_min, y_min=y_min, x_max=x_max, y_max=y_max, tag=tag, lang=lang, columns=columns, verbose=verbose)
 
     if num > 0 and df is not None:
         if verbose:

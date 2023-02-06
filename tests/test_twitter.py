@@ -177,7 +177,8 @@ class Test_Twitter(unittest.TestCase):
                                      db_password=self.DB_PASSWORD,
                                      db_port=self.DB_PORT,
                                      db_schema=self.DB_SCHEMA,
-                                     db_username=self.DB_USERNAME
+                                     db_username=self.DB_USERNAME,
+                                     columns='id, x, y'
 
                                      )
             cnt_rows = 0

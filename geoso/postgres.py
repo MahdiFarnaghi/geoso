@@ -256,8 +256,7 @@ class PostgresHandler_Tweets(PostgresHandler):
         pass
 
     def read_data_from_postgres(self, start_date: datetime, end_date: datetime, x_min, y_min, x_max, y_max, table_name='tweet', tag='', lang=None,
-                                columns: list = [
-                                    'id', 'x', 'y', 't', 'text', 'lang', 'user_id', 'user_screen_name', 'hashtags_'],
+                                columns = '*',
                                 verbose=False):
         # todo: check if the table exists and catch any error
         if verbose:
@@ -273,7 +272,7 @@ class PostgresHandler_Tweets(PostgresHandler):
         end = datetime(year=end_date.year, month=end_date.month,
                        day=end_date.day, hour=end_date.hour, minute=end_date.minute)
 
-        col = ','.join(columns) if columns is not None and len(
+        col = ','.join(columns.split(',')) if columns is not None and len(
             columns) > 0 else '*'
         sql = self._get_select_bbox_time(col, tag, lang)
 
