@@ -2,7 +2,7 @@
 
 __author__ = """Mahdi Farnaghi"""
 __email__ = 'mahdi.farnaghi@outlook.com'
-__version__ = '0.0.10'
+__version__ = '0.0.11'
 
 from .twitter_reader_writer import (
     twitter_export_db_to_csv,
